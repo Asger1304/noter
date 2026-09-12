@@ -1,0 +1,118 @@
+---
+title: "tø uge 3"
+output: html_document
+date: "2025-02-04"
+---
+
+## OMS: opgave 1.5
+
+```{r}
+#simulationer
+n1=rnorm(50,0,1)
+n2=rnorm(50,0,2)
+n3=rnorm(50,1,1)
+```
+
+jeg tegner graferne
+
+```{r}
+qqnorm(n1,main="QQ plot")
+qqline(n1)
+abline(a=0,b=1,col="green")
+```
+
+```{r}
+qqnorm(n2,main="QQ plot")
+
+abline(a=0,b=2,col="green")
+```
+
+```{r}
+qqnorm(n3,main="QQ plot")
+
+abline(a=1,b=1,col="green")
+```
+
+ide til formel for qq linien er abline(mu,sigma)
+
+nu tjekker vi med ny fordeling
+
+```{r}
+n4=rnorm(50,-2,3)
+qqnorm(n4,main="ploooot")
+abline(-2,3)
+```
+
+## oms: opgave 1.24
+
+```{r}
+x=c(0.25,0.5,0.75)
+#vi finder de teoretiske kvartiler
+kv=sqrt(-log(1-x))
+kv
+
+```
+
+```{r}
+#simulation 
+s=rexp(10^6,1)
+ks=sqrt(s)
+fivenum(ks)
+```
+
+vi ser at det passer som det også gerne skulle
+
+## msrr opgave 2.17
+
+```{r}
+x <- rnorm(15)    # random sample of size 15 from N(0,1)
+par(mfrow=c(1,2)) # set up to place 2 graphs side by side
+qqnorm(x)
+qqline(x)
+hist(x,breaks=10)
+
+```
+
+```{r}
+x <- rnorm(30)    # random sample of size 15 from N(0,1)
+par(mfrow=c(1,2)) # set up to place 2 graphs side by side
+qqnorm(x)
+qqline(x)
+hist(x,breaks=10)
+
+```
+
+```{r}
+x <- rnorm(60)    # random sample of size 15 from N(0,1)
+par(mfrow=c(1,2)) # set up to place 2 graphs side by side
+qqnorm(x)
+qqline(x)
+hist(x,breaks=10)
+
+```
+
+```{r}
+x <- rnorm(100)    # random sample of size 15 from N(0,1)
+par(mfrow=c(1,2)) # set up to place 2 graphs side by side
+qqnorm(x)
+qqline(x)
+hist(x,breaks=10)
+
+```
+
+## ugeseddel opgave 1
+
+```{r}
+x<-rexp(1e6)
+m=mean(x)
+s=sd(x)
+#middelværdi
+m
+#spredning
+s
+z=(x-m)/s
+#skævhed
+mean(z^3)
+#kurtosis
+mean(z^4)
+```

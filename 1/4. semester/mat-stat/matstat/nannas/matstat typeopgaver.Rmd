@@ -1,0 +1,1441 @@
+---
+title: "matstat typeopgaver"
+author: "Nanna Liv Berdiin"
+date: "2025-05-26"
+output: pdf_document
+---
+
+note: husk lige altid først at loade data det er de ikke her!
+
+# Opg 1 2019 juni homogenitetstest multinomialfordelingen
+```{r}
+obs=rbind(c(5,11,7),c(8,9,6))
+# forventede , teststørrelse og p-værdi beregnes
+ex=outer(rowSums(obs),colSums(obs))/sum(obs) 
+
+gTest=2*sum(obs*log(obs/ex))
+
+pval=1-pchisq(gTest,(dim(obs)[1]-1)*(dim(obs)[2]-1))
+
+list(Forventede=ex,G=gTest,Pvaerdi=pval)
+```
+# . 
+# Opg 2 2019 juni residualvariansen fra lmfit model
+
+Find 95%-konfidensinterval for residualvariansen. 
+vi har fra side 66 i de supplerende noter at vi kan finde konfidensintervallet af $\sigma^2$ med
+$$
+[s_{02}^2(X)/(\chi^2_{1-\alpha/2}(f_{02})/f_{02}), \quad s_{02}^2(X)/(\chi^2_{\alpha/2}(f_{02})/f_{02})]
+$$
+som så giver mig
+```{r}
+s_sq = sigma(lmfit_m3)^2
+alpha = 0.05
+f = df.residual(lmfit_m3)
+
+lower <- f*s_sq/qchisq(1-alpha/2, df = f)
+upper <- f*s_sq/qchisq(alpha/2, df = f)
+
+c(lower, upper)
+```
+
+# . 
+# Opg 1 2019 aug multinomialmodel med eksponentialfordeling sandsynlighed for kasse
+
+sandsynligheden er så
+$$
+P(x\leq 4) - P(x\leq 2) = 1-exp(-4\cdot(1/12.2)) - (1-exp(-2\cdot(1/12.2)))
+$$
+som vi kan regne i r
+```{r}
+(1-exp(-4*(1/12.2)) - (1-exp(-2*(1/12.2))))*49
+```
+# . 
+# Opg 2 2019 aug normalfordelt model, variansestimatets fordeling
+## normalfordeling og fordeling af teststørrelse for variansen
+
+modellen er 
+$$
+M_0: X_i \sim N(1000,20^2)
+$$
+eftersom $20^2=400$ så har vi altså nulhypotesen
+$$
+H_0: \sigma^2 = 400
+$$
+og alternativhypotesen
+$$
+H_A: \sigma^2>400
+$$
+under $H_0$ gælder det at teststørrelsen har fordelingen
+$$
+s^2(X)/\sigma_0^2 \sim \chi^2(n)/(n-1)
+$$
+
+## sandsynligheden for type 1 fejl
+
+$$
+P(s^2(X)>500) = P(t>(n-1)500/(\sigma_0^2)) = P(t>99\cdot 500/400) = P(t>123.75)
+$$
+her vil $t\sim \chi^2(n)$ fordelt ud fra omskrivninger fra opgave a) 
+```{r}
+1 - pchisq(123.75, df=100)
+```
+
+# .
+# Opg 3 2019 aug permutationstest om ens median
+```{r}
+beans <- read.csv("beans.csv")
+
+grpG <- subset(beans, color == "red")$growth
+grpR <- subset(beans, color == "green")$growth
+
+obj <- beans$growth
+obs = median(grpG) - median(grpR)
+
+N <- 10^4 - 1
+result <- numeric(N) 
+for (i in 1:N) {
+  index <- sample(length(obj), size = length(grpG), replace = FALSE) #ret til for gruppe G
+  result[i] <- median(obj[index]) - median(obj[-index])
+}
+
+#og finder p-værdien
+pval = (2*min(sum(result < obs),sum(result >= obs)) + 1) / (N+1)
+pval
+```
+
+# . 
+# Opg 4 2019 aug prædiktionsinterval ny måling, hvor den er log
+
+denne er log, så derfor har jeg exp rundt om predict, skal ikke være der normalt!
+```{r}
+lmfit_m2 <- lm(logcost ~ logDOTestimate + bid, data = floridaroads)
+nyData = data.frame(logDOTestimate = log(3000), bid = "competitive")
+
+#husk her at fjerne exp hvis det ikke er log(x) vi regner med!!s
+exp(predict(lmfit_m2, nyData, interval = "prediction", level = 0.9))
+```
+
+# .
+# Opg 1 2020 juni permutationstest for ens middelværdi mu_1 = mu_2 / forskellen lig 0
+
+vi tester hypotesen
+$$
+H: \mu_1 = \mu_2
+$$
+den alternative hypotese vi teter imod er:
+$$
+H_A: \mu_1 <\mu_2
+$$
+
+```{r permutationstest for ens middelværdi mu_1 = mu_2 / forskellen lig 0}
+#dette er kode hvor man laver en permutationstest med to forskellige data
+#og så sammenligner om deres middelværdi er ens
+#med andre om om forskellen er 0
+
+#vi laver permutationstest hvor vi tester om forskellen er 0
+start <- honning$HMFstart #værdi 1 SKRIV HER
+slut <- honning$HMFend #værdi 2 SKRIV HER
+obs = mean(slut)-mean(start)
+d = slut - start
+n = length(d)
+N <- 10^4 - 1
+result <- numeric(N) 
+for (i in 1:N) {
+  signs <- sample(c(-1,1),n,replace=TRUE)
+  result[i] <- mean(signs*d) 
+}
+
+#laver et histogram
+hist(result, col = "lightblue3")
+abline(v=obs, col = "red2")
+
+#og finder p-værdien
+pval = (sum(result >= obs) + 1) / (N+1)
+pval
+```
+# .
+# Opg 2 2020 juni arbejder mod en lineær normal model 
+## bartlett test for ens varians med to normalfordelte rækker
+
+eksempel her er for 5 grupper og 5 observationer i hver gruppe. 
+modellen med hver sin middelværdi og varians:
+$$
+M_0: X_{ij} \sim N(\mu_i,\sigma_i^2), i=1,2,3,4,5, j=1,2,3,4,5
+$$
+hypotesen om at variansen er ens
+$$
+H_{0\sigma^2}:\sigma_i^2=\sigma^2, i=1,2,3,4,5
+$$
+```{r bartlett test for ens varians med to normalfordelte rækker}
+#dette er simpel test hvor vi tester om der er ens varians
+
+#definerer mine variable, dette skal rettes til!
+respons_variabel <- musling$Protein
+forklarende_variabel <- musling$Tid
+
+#kører bartlett test for ens varians
+bartlett.test(respons_variabel ~ 1 + forklarende_variabel) 
+```
+## grafisk undersøgelse af normalfordelt data i grupper med egen middelværdi og ens varians
+```{r grafisk undersøgelse af normalfordelt data i grupper med egen middelværdi og ens varians}
+#dette er hvis man har data M_0 normalfordelt med flere grupper der alle er normalfordelte
+#med hver deres middelværdi pr gruppe men fælles overordnet varians(tjekket med fx bartlett test)
+
+#definerer variable, disse skal rettes til
+respons_variabel <- musling$Protein
+forklarende_variabel <- musling$Tid
+antal <- 5 #ret til med hvor mange grupper der er
+
+#plot data
+plot(respons_variabel ~ forklarende_variabel, col = rainbow(antal))
+#find residualer
+lmfit <- lm(respons_variabel ~ forklarende_variabel)
+residualer <- lmfit$residuals
+
+#lav qqplot over residualerne
+qqnorm(residualer, col = "purple2")
+qqline(residualer, col = "green3")
+
+#samt et boxplot over de forskellige "datasæt" (grupper)
+boxplot(respons_variabel ~ forklarende_variabel, col = rainbow(antal))
+
+```
+## konfidensinterval for forskel i middelværdi mellem normalfordelte grupper med ens varians
+
+dette er for 5 grupper med hver 5 observationer!
+modellen med hver sin middelværdi og ens varians:
+$$
+M_0: X_{ij} \sim N(\mu_i,\sigma^2), i=1,2,3,4,5, j=1,2,3,4,5
+$$
+```{r konfidensinterval for forskel i middelværdi mellem normalfordelte grupper med ens varians}
+#dette er generelt viderebygning af den ovenover!
+#den tester for de forskellige grupper finder konfidensinterval for forskellen i middelværdi
+
+#definer variable, SKAL RETTES TIL!
+respons_variabel <- musling$Protein
+forklarende_variabel <- musling$Tid
+
+#hvis din forklarende variabel ikke allerede er som en faktorvariabel skal den laves om,
+#så den ser det som 5 seperate grupper og ikke en funktion af fx tid
+forklarende_faktor <- as.factor(forklarende_variabel)
+
+#så kører man faktisk bare confint på lmfit for at finde konfidensintervallet i middelværdi
+lmfit <- lm(respons_variabel~forklarende_faktor)
+confint(lmfit)
+#og så har du dit svar
+
+#evt hvis du skal finde et bud på forskellen og ikke et konfidensinterval kan du køre
+#denne burde du så også kunne regne middelværdien for hver gruppe med, 
+#men det findes der nok også en smartere måde for
+coef(lmfit)
+
+```
+## anova for reducering til lineær normal model for normalfordelt data i grupper
+
+modellen op med middelværdi afhængig af tid og ens varians:
+$$
+M_1: X_{ij} \sim N(\alpha + \beta \cdot t_i,\sigma^2), i=1,2,3,4,5, j=1,2,3,4,5
+$$
+
+```{r anova for reducering til lineær normal model for normalfordelt data i grupper}
+#dette er igen viderearbejde fra den ovenover
+#den sammenligner modellen hvor det er en lineær normal model med 
+#den hvor hver gruppe har sin egen middelværdi der ikke er lineært bestemt
+
+#definer variable, SKAL RETTES TIL!
+respons_variabel <- musling$Protein
+forklarende_variabel <- musling$Tid
+
+#hvis din forklarende variabel ikke allerede er som en faktorvariabel skal den laves om
+forklarende_faktor <- as.factor(forklarende_variabel)
+
+#den hvor den er lineært bestemt: 
+lmfit_m1 <- lm(respons_variabel~forklarende_variabel)
+#den hvor hver gruppe er sin egen, ingen sammenhæng på tværs
+lmfit_m2 <- lm(respons_variabel~forklarende_faktor) 
+#kør så anova for at tjekke om man kan reducere til den med lineær normal model
+anova(lmfit_m2,lmfit_m1)
+
+```
+## konfidensinterval for forskel i middelværdi mellem to punkter lineær normal model
+```{r konfidensinterval for forskel i middelværdi mellem to punkter lineær normal model}
+#dette er ligesom koden 2 over men nu er de ikke som faktorvariabel
+#det betyder det er en lineær normal model
+#og vi finder altså en hældning på middelværdien
+#så hvis vi skal finde forskellen i middelværdien mellem to punkter 
+#tager vi så hældningen og ganger med antal tid(x-akse-værdier) for at få konfidensintervallet
+#mellem de to punkter
+
+#definer variable, SKAL RETTES TIL!
+respons_variabel <- musling$Protein
+forklarende_variabel <- musling$Tid
+forskel_mellem_punkter <- 65 #dette er eks. antal dage mellem de to grupper man finder forskellen for
+
+lmfit <- lm(respons_variabel~forklarende_variabel)
+confidence <- confint(lmfit)
+confidence
+#her får man så konfidensinterval for skæring og hældning
+#hvis man skal finde forskellen i middelværdi mellem to tidspunkter
+#skal man bare tage den høje og lave grænse og gange dem med forskellen på x-aksen
+#tjek først kald passer med det du forventer:
+lav_værdi_hældning <- confidence[2][1]
+høj_værdi_hældning <- confidence[4][1]
+lav_værdi_hældning
+høj_værdi_hældning
+
+#hvis de passer får man så svaret med, hvis ikke så bare skriv dem ind som du aflæser i "confidence"
+lav_værdi_hældning*forskel_mellem_punkter 
+høj_værdi_hældning*forskel_mellem_punkter
+```
+# .
+# Opg 3 2020 juni multinomialmodel 4 kasser med fast-rate-hypotesen 1 fri variabel
+
+multinomial model med 4 kasser
+$$
+(A_1, A_2, A_3, A_4) \sim multinom(200,(\pi_1,\pi_2,\pi_3,\pi_4))
+$$
+$$
+\pi_{i}\geq0, \pi_1+\pi_2+\pi_3+\pi_4 = 1
+$$
+
+her er den generelle likelihoodfunktion for 4 kasser
+$$
+L(\pi) = \begin{pmatrix} 200 \\ a_1 \cdot a_2 \cdot a_3 \cdot a_4 \end{pmatrix} \cdot \pi_1^{a_1} \cdot \pi_2^{a_2} \cdot \pi_3^{a_3} \cdot \pi_4^{a_4}
+$$
+
+evt med forklaring af hvad vi kigger på
+$$
+\hat{\theta} = arg(max_{\theta}(L(\theta)))
+$$
+
+```{r test af fast rate hypotese multinomialmodel, eksempel med 4 kasser og 1 fri variabel}
+#start med at loade din data
+observerede <- c(29, 21, 21, 129) #SKAL RETTES
+#og find antal observationer i alt
+n <- sum(observerede)
+n
+
+#nu laver vi så en test for hypotesen om fast rate
+#jeg har fået givet en thetahat, kan også være man får givet de forventede værdier
+#så skriver man bare dem ind under forventede som en vektor i stedet for hele udregningen
+
+#skriver mine givne værdier ind, SKAL RETTES!
+thetahat = 0.1362764 
+kasser = 4 #antal kasser de kan falde i
+frie_parametre = 1 #antal frie parametre i modellen
+
+#beregn forventede værdier eller skriv vektoren alt efter hvad er givet i opgaven!
+forventede = n*c(thetahat,(1-thetahat)*thetahat,(1-thetahat)^2*thetahat, (1-thetahat)^3) #SKAL RETTES!
+
+#beregn teststørrelse:
+Gobs = 2*sum((observerede*log(observerede/forventede))) 
+
+#beregn p-værdi
+1-pchisq(Gobs,kasser-1-frie_parametre) 
+```
+# .
+# Opg 4 2020 juni blandede opgaver
+## beregning af varians ud fra billede af qqplot
+```{r beregning af varians ud fra billede af qqplot}
+#for at beregne variansen af normalfordelt data ud fra et qqplot så tager man
+((ændringen i y-aksen)/(ændringen i x-aksen))^2 
+#altså ændringen er laveste og højeste værdi man kan se på tegningen
+```
+## vilkårlig beregning af skøn over type 1 fejl og type 2 fejl
+```{r vilkårlig beregning af skøn over type 1 fejl og type 2 fejl}
+"
+TO = vektor med udfald af T
+T1 = vektor med udfald af T1, som er under alternativ hypotese
+crit = den kritiske værdi
+Nsim = antal gange vi kører testen
+
+type1fejl = sum(TO<=crit) /Nsim #sandsynligheden type 1 fejl
+type2fej = sum(T1>crit) / Nsim #sandsynligheden type 2 fejl
+"
+```
+eller:
+
+sandsynligheden for type 1 fejl er
+$$
+P(type 1 fejl) = P_{H_0}(forkaste H_0) = P_{H_0}(T\leq crit)
+$$
+sandsynligheden for type 2 fejl er
+$$
+P(type 2 fejl) = P_{H_A}(acceptere H_0) = P_{H_A}(T> crit)
+$$
+
+# .
+# Opg 2 2021 juni multinomialmodel
+## 95% konfidensinterval for vilkårlig pi sandsynlighed i multinomialmodellen
+
+multinomial fordeling, med n=97 og 4 kasser, så min model lyder
+$$
+(A_1, A_2, A_3, A_4) \sim multinom(97,(\pi_1,\pi_2,\pi_3,\pi_4))
+$$
+$$
+\pi_{i}\geq0, \pi_1+\pi_2+\pi_3+\pi_4 = 1
+$$
+
+
+```{r 95% konfidensinterval for vilkårlig pi sandsynlighed i multinomialmodellen}
+#ved at kalde prop.test kan man få 95%konfidensinterval for sandsynligheden for at 
+#ramme i en af kasserne ud fra antal i alt
+#og antal i den specifikke kasse
+
+#definer variable:
+n <- 97 #antal observerede i alt
+kasse_i <- 43 #antal i kasse i der skal findes sandsynlighed for
+
+#kør prop.test
+prop.test(kasse_i,n)$conf.int
+
+```
+## test af multiplikativ model multinomialmodel, eksempel med 4 kasser og 2 frie variabele
+```{r test af multiplikativ model multinomialmodel, eksempel med 4 kasser og 2 frie variabele}
+#nogenlunde ligesom opg 3 eksamen 2020, men her er de forventede givet
+
+#skriv din data ind! 
+observerede <- c(16,17,21,43)
+kasser = 4
+frie_parametre = 2
+n = 97
+forventede = c(12.59, 20.41, 24.42, 39.58)
+
+#beregn teststørrelse 
+Gobs = 2*sum((observerede*log(observerede/forventede))) 
+Gobs
+
+#beregn p-værdi
+1-pchisq(Gobs,kasser-1-frie_parametre) 
+
+```
+# .
+# Opg 3 eksamen 2021 juni multipel regression, backward selektion, normalfordelt residual
+
+jeg har den multiple regressionsmodel med 5 variable
+$$
+M_1: X_i \sim N(\alpha + t_{i1} \cdot T1 + t_{i2} \cdot T2 + t_{i3} \cdot T3 + t_{i4} \cdot T4 + t_{i5} \cdot T5, \sigma^2),  i=1,2,3,4,5
+$$
+
+
+```{r backwards selektion multipel regression, anova, residualer normalfordelt, parameterskøn}
+#dette er hvordan man bruger backwards selektion
+#først fit din model og kør summary, og fjern den med højest p værdi(over typisk 0.05)
+#bliv så ved indtil der ikke er flere der har over 0.05
+
+lmfit1 <- lm(oktan ~ T1 + T2 + T3 + T4 + T5, data = oktan)
+summary(lmfit1)
+
+#når du så når enden tjek den første mod den nyeste med anova for om vi kan lave reduceringen
+anova(lmfit4, lmfit1)
+
+#vi kan også tjekke om residualerne er normalfordelte
+residualer <- residuals(lmfit4) 
+qqnorm(residualer, col = "skyblue2")
+qqline(residualer, col = "orange")
+
+#find parameterskøn og 95% konfidensinterval for parametrene
+coef(lmfit4) # giver parameterskøn
+confint(lmfit4) #giver 95% konfidensinterval for parametrene
+
+```
+
+# .
+# Opg 1 2021 august normalfordelt observationsrække
+## 90% konfidensinterval for middelværdi af observationsrække
+
+jeg har at konfidensintervallet for $\mu$ er 
+$$
+[\bar{x.} - \sqrt{s^2/n} \cdot t_{1-\alpha/2}(n-1), \bar{x.} + \sqrt{s^2/n} \cdot t_{1-\alpha/2}(n-1)]
+$$
+
+```{r}
+#skriv parametre ind
+data <- honey$increase
+alpha <- 0.10
+
+#så regner vi så løs
+xbar <- mean(data)
+s <- sd(data)
+n <- length(data)
+t_alpha <- qt(1-alpha/2, n-1)
+#så jeg får
+lower <- xbar - sqrt(s^2/n)*t_alpha
+upper <- xbar + sqrt(s^2/n)*t_alpha
+c(lower, upper)
+```
+
+## bootstrap test for middelværdien
+```{r}
+#skriv parameter ind
+data_test <- honey$increase
+
+#regner
+n <- length(honey$increase)
+N <- 10^4
+test.mean <- replicate(N,mean(sample(data_test, size=n, replace = TRUE)))
+hist(test.mean, main = "Bootstrap distribution of means", col = "skyblue", breaks=50) 
+abline(v = mean(data_test), col = "blue", lty = 2)
+
+#evt også lave andre grafer, måske også et qqnorm?
+boxplot(test.mean, col = "orange")
+plot.ecdf(test.mean, col = "pink2")
+```
+## bootstrap-t-konfidensinterval for middelværdien af observationsrække
+
+Note: det her er basically kode for hele opgave 1, men det man skal er egentlig oppe i b'eren også at regne T_star og så bruge den. 
+
+```{r}
+#det her er egentlig til opgave b over den men man skal også regne T_star i det samme
+Nsim <- 10^4
+mean_vec <- numeric(Nsim)
+T_star <- numeric(Nsim)
+
+for (i in 1:Nsim) {
+  new_samp <- sample(honey$increase, 14, replace = TRUE)
+  mean_vec[i] <- mean(new_samp)
+  T_star[i] <- (mean_vec[i] - mean(honey$increase))/(sd(new_samp)/sqrt(14))
+}
+
+hist(mean_vec, breaks = 100, prob = TRUE)
+Qs <- quantile(T_star, c(0.95, 0.05))
+Qs
+qqnorm(mean_vec)
+qqline(mean_vec)
+
+#det her er så bootstrap t-intervallet
+mean(honey$increase) - Qs * sd(honey$increase)/sqrt(14)
+
+#det her er til opgaven bagefter
+new_contents <- honey$start + honey$increase
+mean(new_contents > 20)
+```
+
+
+## sandsynligheden p for noget er overholdt fra observationsrække og konfidensinterval for p
+
+det er bare hvor mange der overholder det over hvor mange der er i alt. 
+```{r}
+sand <- length(subset(honey$total2, honey$total2 >= 20))
+n <- length(honey$total2)
+sand/ n
+
+#samt konfidensinterval for p
+alpha = 0.10
+prop.test(sand,n, conf.level = 1-alpha)$conf.int
+
+```
+# .
+# Opg 2 2021 august lineær regression middeværdi normalfordelt i grupper
+## model, hver gruppe har sin egen middelværdi og varians lineær model, variansskøn og varianshomogenitet
+
+modellen er så for to grupper
+$$
+M_0: X_{ij} \sim N(\mu_i,\sigma_i^2), i=1,2, j=1,...,n_i
+$$
+hypotesen om ens varians imellem grupperne
+$$
+H_{0\sigma^2}:\sigma_i^2=\sigma^2, i=1,2
+$$
+skøn over hver gruppes varians
+```{r}
+kvinder <- subset(salmon, Sex == "hun")
+mænd <- subset(salmon, Sex == "han")
+
+lmfitkvinder <- lm(kvinder$LnWeight ~ kvinder$LnLength) 
+lmfitmænd <- lm(mænd$LnWeight ~ mænd$LnLength) 
+
+summary(lmfitkvinder)
+summary(lmfitmænd)
+
+#læs disse i summary
+sigmakvinder <- 0.1076^2
+sigmamænd <- 0.1062^2
+sigmakvinder
+sigmamænd
+```
+tjek om varians er ens imellem grupperne
+```{r}
+#skriv variable ind
+respons_variabel <- salmon$LnWeight
+gruppe <- salmon$Sex
+
+#lav test
+bartlett.test(respons_variabel ~ gruppe) 
+```
+
+## model ens varians forskellig lineær middelværdi, qqplot residualer
+
+jeg har altså modellen
+$$
+M_1: X_{ij} \sim N(\alpha_i + \beta_i \cdot t_i,\sigma^2), i=1,2, j=1,...,n_i
+$$
+
+qqplot over residualerne
+```{r}
+#skriv ind
+respons_variabel <- salmon$LnWeight
+forklarende_variabel <- salmon$LnLength
+gruppe <- salmon$Sex
+
+lmfit <- lm(respons_variabel ~ forklarende_variabel*gruppe)
+residualer <- residuals(lmfit) 
+qqnorm(residualer, col = "skyblue2")
+qqline(residualer, col = "orange")
+```
+## F-test for hypotesen om ens hældning i grupperne
+
+jeg vil gerne vise modellen , med to grupper!
+$$
+M_2: X_{ij} \sim N(\alpha_i + \beta \cdot t_i,\sigma^2), i=1,2, j=1,...,n_i
+$$
+med hypotesen
+$$
+H_{0\beta}:\beta_i=\beta, i=1,2
+$$
+jeg skal så lave min F-test
+```{r}
+#skriv ind
+respons_variabel <- salmon$LnWeight
+forklarende_variabel <- salmon$LnLength
+gruppe <- salmon$Sex
+
+#skriver modeller op og udfører test
+lmfit_m1 <- lm(respons_variabel ~ forklarende_variabel*gruppe)
+lmfit_m2 <- lm(respons_variabel ~ forklarende_variabel + gruppe)
+anova(lmfit_m2,lmfit_m1)
+```
+## 95%-konfidensinterval for forskel i skæring af regressionslinjen mellem to grupper
+```{r}
+#skriv ind
+respons_variabel <- salmon$LnWeight
+forklarende_variabel <- salmon$LnLength
+gruppe <- salmon$Sex
+
+#udfører test
+lmfit_m2 <- lm(respons_variabel ~ forklarende_variabel + gruppe)
+confint(lmfit_m2)
+```
+# .
+# Opg 3 2021 august uafhængighedshypotese for multinomialmodel
+## uafhængighedshypotese for multinomialmodel 2x3 matrice, 6 kasser
+
+jeg har modellen
+$$
+M_0: (A_{11}, A_{12}, A_{13}, A_{21}, A_{22}, A_{23}) \sim multinom(6, (\pi_{11}, \pi_{12}, \pi_{13}, \pi_{21}, \pi_{22}, \pi_{23}))
+$$
+$$
+\pi_{ij} \geq 0, \pi_{11}+ \pi_{12}+ \pi_{13}+ \pi_{21}+ \pi_{22}+ \pi_{23} = 1
+$$
+
+og hypotesen om uafhængighed er så
+$$
+\pi_{ij} = \alpha_i\cdot \beta_j
+$$
+$$
+\alpha_1 + \alpha_2  = 1, \beta_1 + \beta_2 + \beta_3=1
+$$
+
+## test af uafhængighedshypotese
+
+bruger her kode fra slides, det er kun obs der skal rettes til!
+```{r}
+#ret til
+obs <- rbind(c(11,25,10), c(12,46,20))
+
+#brug kode
+r=dim(obs)[1]; k=dim(obs)[2]
+rs=rowSums(obs)
+cs=colSums(obs)
+h=rep(c(1:r),rs)
+m=rep(c(1:k),cs)
+
+Gfct=function(Amat){
+ex=outer(rowSums(Amat),colSums(Amat))/sum(Amat)
+A1=ifelse(Amat==0,1,Amat)
+return(2*sum(Amat*log(A1/ex)))
+}
+Gobs=Gfct(obs)
+
+nSim=10^4-1
+Gval=rep(0,nSim)
+for (i in 1:nSim){
+msamp=sample(m)
+tabelsamp=table(h,msamp)
+Gval[i]=Gfct(tabelsamp)
+}
+pval=(1+sum(Gval>=Gobs))/(1+nSim)
+c(G=Gobs,pværdi=pval)
+```
+## fast-rate ish hypotese multinomialmodel, 3 kasser, udledning af thetahat fra likelihood
+
+sandsynlighederne er her
+$$
+P(orr-1)=\theta^2, P(orr-2)=2\theta(1-\theta), P(orr-3) = (1-\theta)^2, 0\leq\theta\leq1
+$$
+likelihoodfunktionen er
+$$
+L(\pi) = \begin{pmatrix} 46+78 \\ a_1 \cdot a_2 \cdot a_3 \end{pmatrix} \cdot \pi_1^{a_1} \cdot \pi_2^{a_2} \cdot \pi_3^{a_3}
+$$
+
+# .
+# Opg 1 2022 juni multinomialmodel to fordelinger, startmodel og hypotese om ens varians
+
+jeg har modellen
+$$
+M_0: (A_{11}, A_{12}, A_{13}) \sim multinom(78, (\pi_{11}, \pi_{12}, \pi_{13}))
+$$
+$$
+ ( A_{21}, A_{22}, A_{23}) \sim multinom(114, ( \pi_{21}, \pi_{22}, \pi_{23}))
+$$
+
+$$
+\pi_{ij} \geq 0, \pi_{11}+ \pi_{12}+ \pi_{13} = 1, \pi_{21}+ \pi_{22}+ \pi_{23} = 1
+$$
+
+og hypotesen om samme fordeling er så
+$$
+H_0: \pi_{ij} = \pi_i, \quad  for \quad j=1,2,3
+$$
+
+# . 
+# Opg 2 2022 juni additiv model
+## modelopskrivelse og test for varianshomogenitet
+
+modellen vi har til at starte med
+$$
+M_0: X_{ijk} \sim N(\mu_{ij},\sigma_{ij}^2), i=1,2,3, j=1,2,3,4, k=1,...,n_{ij}
+$$
+hypotesen om ens varians imellem grupperne
+$$
+H_{0\sigma^2}:\sigma_{ij}^2=\sigma^2, i=1,2,3, j=1,2,3,4
+$$
+dette kan vi teste med en bartlett test. 
+```{r}
+bakteriehaemmer <- read.csv("bakteriehaemmer.csv", stringsAsFactors = TRUE)
+
+respons_variabel <- bakteriehaemmer$radius
+gruppe <- interaction(bakteriehaemmer$Haemmer, bakteriehaemmer$Bakterietype)
+lmfit_m1 <- lm(radius ~ Haemmer*Bakterietype, data = bakteriehaemmer)
+
+#lav test
+bartlett.test(respons_variabel ~ gruppe) 
+```
+det betyder at jeg nu har modellen. 
+$$
+M_1: X_{ijk} \sim N(\mu_{ij},\sigma^2), i=1,2,3, j=1,2,3,4, k=1,...,n_{ij}
+$$
+
+## interaction plot for grafisk undersøgelse af additiv model
+
+interaction plot
+responsvariabel skal stå til sidst, og ellers så lav for de forskellige kombinationer der nu er
+```{r}
+interaction.plot(bakteriehaemmer$Haemmer, bakteriehaemmer$Bakterietype, bakteriehaemmer$radius, col ="blue")
+interaction.plot(bakteriehaemmer$Bakterietype, bakteriehaemmer$Haemmer, bakteriehaemmer$radius, col ="red")
+```
+
+# . 
+# Opg 3 2022 juni givet fordelingsfunktion 
+## bevis for udledning af p fraktil
+
+Vis, at p-fraktilen $q_p,0<p<1$,for F er givet ved
+$$
+q_p = \frac{(log(1-p))^2}{\lambda^2}
+$$
+vi kan finde p-fraktilen ved at løse
+$$
+F(q_p)=p 
+$$
+for $q_p$ dette giver mig altså
+$$
+1 - e^{-\lambda \cdot \sqrt{q_p}} = p \Leftrightarrow log(1-p) = -\lambda \cdot \sqrt{q_p}
+$$
+$$
+\Leftrightarrow q_p = \frac{(log(1-p))^2}{\lambda^2}
+$$
+som var det jeg skulle vise. 
+
+## tegning af fraktildiagram for given fordelingsfunktion
+
+jeg kan her bruge fraktilfunktionen fundet i opgave 1, når $\lambda=1$ har jeg da
+$$
+q_p = (log(1-p))^2
+$$
+som så giver mig fraktilplottet
+```{r}
+sim <- read.csv("sim.csv")
+
+qqplot((log(1-ppoints(100)))^2, sort(sim$Xsim, ), col = "palevioletred2")
+abline(0,1, col = "orange")
+```
+
+
+## estimat for lambda ved momentmetoden given fordelingsfunktion
+
+Vis, at man ved at benytte momentmetoden kommer frem til følgende estimator for $\lambda$: 
+$$
+\hat{\lambda}^M = \sqrt{\frac{2}{\bar{X}}},  \quad \bar{X} = \frac{1}{n}\cdot \sum_{i=1}^{n}X_i
+$$
+og angiv estimatet for $\lambda$ beregnet ud fra observationerne af Xsim.
+
+når vi bruger momentmetoden sætter vi $E(X)=\bar{X}$. 
+vi har fået at vide at $X_i$ har samme fordeling som $Z^2$ med Z er eksponentialfordelt, jeg kan her bruge at for eksponentialfordelingen gælder det at
+$$
+E[X^n] = n!/\lambda^n
+$$
+som altså betyder at jeg får
+$$
+E(X^2) = n!/\lambda^2 = 2/\lambda^2
+$$
+jeg sætter dem så lig med hianden og løser for lambda
+$$
+\frac{2}{\lambda^2} = \bar{X} \Leftrightarrow \lambda^2 = \frac{2}{\bar{X}} \Leftrightarrow \hat{\lambda}^M = \sqrt{\frac{2}{\bar{X}}}
+$$
+som var det jeg skulle vise. 
+
+ud fra Xsim får jeg så estimatet
+```{r}
+lambdahat <- sqrt(2/mean(sim$Xsim))
+lambdahat
+```
+mit estimat for lambda er altså 1.03. 
+
+## simulationseksperiment af lambda, histogram og standardafvigelse af lambda
+
+jeg bruger her at jeg ved fordelingen af X ift eksponentialfordelingen, så jeg får
+```{r}
+set.seed(13)
+n <- 100
+N <- 10^3
+lambda.vec <- numeric(N)
+
+for (i in 1:N) {
+  X <- rexp(100, rate= 1)^2
+  lambda.vec[i] <- sqrt(2/mean(X))
+}
+hist(lambda.vec, col = "mediumvioletred", breaks = 25)
+
+sd(lambda.vec)
+
+```
+så et estimat for standardafvigelsen er altså 0.11
+
+# . 
+# Opg 1 2022 aug momentmetoden for estimator
+
+vi har fået data om X
+```{r}
+data <- c(3.23, 2.19, 2.50, 1.89, 3.09)
+```
+da Z og Y er uafhængige må vi have, pga fordelingerne af Z og Y, at
+$$
+E(X)=E(Y)\cdot E(Z) = (1/2)\cdot (\beta/2) = \beta/4
+$$
+sætter dette lig med det empiriske moment 
+$$
+\beta/4 = 1/n \cdot \sum_{i=1}^{n} X_i \Leftrightarrow \beta = 4/n\cdot \sum_{i=1}^{n} X_i
+$$
+og derfor er et estimat for beta ud fra det givne datasæt altså
+```{r}
+beta = 4*(sum(data)/5)
+beta
+```
+
+# .
+# Opg 2 2022 aug model med normalfordelt data
+## permutationstest for ens middelværdi(mean)
+
+```{r}
+grpA <- subset(behandling, Behandling == "A")$x
+grpB <- subset(behandling, Behandling == "B")$x
+
+obj <- behandling$x
+obs = mean(grpA) - mean(grpB)
+oneofthem = grpA
+
+N <- 10^4 - 1
+result <- numeric(N) 
+for (i in 1:N) {
+  index <- sample(length(obj), size = length(oneofthem), replace = FALSE)
+  result[i] <- mean(obj[index]) - mean(obj[-index])
+}
+
+#og finder p-værdien
+pval = (2*min(sum(result < obs),sum(result >= obs)) + 1) / (N+1)
+pval
+```
+
+## databehandling og qqnorm_multi i brug
+
+```{r}
+behandling[1,1] <- 2.2
+source("qqnorm_multi.R")
+boxplot(x~Behandling, data = behandling, col = rainbow(2))
+qqnorm_multi(behandling$x, behandling$Behandling)
+```
+
+## test for varianshomogenitet mellem to grupper (var.test), t.test for ens middelværdi
+```{r}
+grpAny <- subset(behandling, Behandling == "A")$x
+grpBny <- subset(behandling, Behandling == "B")$x
+var.test(grpAny, grpBny)
+```
+
+modellen: 
+$$
+M_1: X_{ij} \sim N(\mu_i,\sigma^2), \quad i=A,B, \quad, j=1,...,n_i
+$$
+
+samt en t-test for ens middelværdi
+```{r}
+t.test(grpAny, grpBny, var.equal = TRUE)
+```
+
+# .
+# Opg 3 2022 aug 95% konfidensinterval for middelværdi og varians i normalfordelingen
+
+når vi har ukendt varians kan vi finde 95% konfidensinterval for middelværdien med
+vi kan ud fra det givne qqplot antage at kødprocenten er normalfordelt og vi kan derfor finde 95% konfidensinterval som (fordi vi har ukendt varians)
+$$
+[\bar{x} - t_{1-\alpha/2}(n-1) \cdot s/\sqrt{n}, \quad \bar{x} + t_{1-\alpha/2}(n-1) \cdot s/\sqrt{n}]
+$$
+som altså giver mig et interval
+```{r}
+xbar <- 60.43
+s <- sqrt(6.748)
+n <- 100
+alpha <- 0.05
+
+lowermu <- xbar - qt(1-alpha/2, df= n-1)*s/sqrt(n)
+uppermu <- xbar + qt(1-alpha/2, df= n-1)*s/sqrt(n)
+c(lowermu, uppermu)
+```
+
+vi kan finde konfidensinterval for variansen med
+$$
+[(n-1)s^2/\chi^2_{1-\alpha/2}(n-1), \quad (n-1)s^2/\chi^2_{\alpha/2}(n-1)]
+$$
+som så giver mig (vi tager kvadratroden for at finde spredningen)
+```{r}
+lowersigma <- (n-1)*s^2/qchisq(1-alpha/2, df= n-1)
+uppersigma <- (n-1)*s^2/qchisq(alpha/2, df= n-1)
+c(sqrt(lowersigma), sqrt(uppersigma))
+```
+
+# . 
+# Opg 1 2023 juni uafhængighedstest med e<5 fishers eksakte test og permutationstest
+
+note: her kunne jeg også have brugt fishers eksakte test
+```{r}
+obs <- rbind(c(2,1,1,10), c(4,5,4,4))
+fisher.test(obs)
+```
+
+jeg kan også bruge en permutationstest for den nye data. 
+```{r}
+#ret til
+obs <- rbind(c(2,1,1,10), c(4,5,4,4))
+
+#brug kode
+r=dim(obs)[1]; k=dim(obs)[2]
+rs=rowSums(obs)
+cs=colSums(obs)
+h=rep(c(1:r),rs)
+m=rep(c(1:k),cs)
+
+Gfct=function(Amat){
+ex=outer(rowSums(Amat),colSums(Amat))/sum(Amat)
+A1=ifelse(Amat==0,1,Amat)
+return(2*sum(Amat*log(A1/ex)))
+}
+Gobs=Gfct(obs)
+
+nSim=10^4-1
+Gval=rep(0,nSim)
+for (i in 1:nSim){
+msamp=sample(m)
+tabelsamp=table(h,msamp)
+Gval[i]=Gfct(tabelsamp)
+}
+pval=(1+sum(Gval>=Gobs))/(1+nSim)
+c(G=Gobs,pværdi=pval)
+```
+# . 
+# Opg 2 2023 juni varianshomogenitet mellem grupper i hver sin model, afskæringer konfidensinterval
+
+til dette laver jeg en bartlett test for at tjekke om varianshomogenitet. 
+```{r}
+turtles <- read.csv("turtles.csv", stringsAsFactors = TRUE)
+turtlesA <- subset(turtles,art == "A")
+turtlesB <- subset(turtles,art == "B")
+turtlesC <- subset(turtles,art == "C")
+
+#vi er vidst nød til at skrive det op som 3 forskellige her
+lmfita <- lm(slagvolumen~blodtryk, data = turtlesA)
+lmfitb <- lm(slagvolumen~blodtryk, data = turtlesB)
+lmfitc <- lm(slagvolumen~blodtryk, data = turtlesC)
+
+#kører bartlett test for ens varians
+bartlett.test(list(lmfita, lmfitb, lmfitc)) 
+```
+
+afskæringernes konfidensinterval findes med 0 + og så modellen man har, så får man den for hver afskæring for sig selv modsat i forhold til hinanden. 
+```{r}
+lmfit_m2star <- lm(slagvolumen ~ 0 + blodtryk + art, data = turtles)
+confint(lmfit_m2star)
+```
+
+# . 
+# Opg 3 2023 juni bootstrap fordeling af estimator, bootstrap percentil interval
+## bootstrap fordeling af estimator
+vi har momentestimatores for a
+$$
+\hat{a} = 2\bar{X}/(1-\bar{X}), \quad \bar{X}=1/n\cdot \sum_{i=1}^{n}X_i
+$$
+
+```{r}
+set.seed(42)
+x <- rbeta(100, 3, 2)
+ahat <- 2*mean(x)/(1-mean(x))
+ahat
+```
+
+bootstrap fordeling og histogram for a
+```{r}
+#skriv parameter ind
+data_test <- x
+
+#regner
+n <- length(data_test)
+N <- 10^4
+
+test.a <- numeric(N)
+
+for (i in 1:N) {
+  x_sample <- sample(data_test, size=n, replace = TRUE)
+  test.a[i] <- 2*mean(x_sample)/(1-mean(x_sample)) 
+}
+
+hist(test.a, main = "Bootstrap distribution of a", col = "skyblue", breaks=60) 
+abline(v = 2*mean(x)/(1-mean(x)) , col = "blue", lty = 2)
+```
+
+## bootstrap percentil interval
+samt bootstrap percentil interval
+```{r}
+alpha = 0.10
+quantile(test.a,probs=c(alpha/2,1-alpha/2))
+```
+
+
+## sandsynligheden for over værdi eller under værdi special beta-fordeling
+```{r}
+mean_a3 <- 3/(3+2)
+sd_a3 <- sqrt((2*3)/(100*(3+2)^2*(3+3)))
+pnorm(0.59, mean = mean_a3, sd = sd_a3)
+```
+
+## type 1 og type 2 fejl generelt
+
+så sandsynligheden for type 1 fejl er altså sandsynligheden for at gennemsnittet er under 0.57
+```{r}
+C = 0.57
+#sandsynligheden for type 1 fejl: 
+#her simulerer vi fra nulhypotesen a=3, vi afviser hypotesen når den er under 0.57
+pnorm(0.57, mean = mean_a3, sd = sd_a3)
+```
+og dermed er sandsynligheden for type 1 fejl altså 0.067. 
+vi finder også sandsynligheden for type 2 fejl, her skal nulhypotesen være falsk og derfor a=2.5
+```{r}
+mean_a25 <- 2.5/(2.5+2)
+sd_a25 <- sqrt((2*2.5)/(100*(2.5+2)^2*(3+2.5)))
+
+1- pnorm(0.57, mean = mean_a25, sd = sd_a25)
+```
+så sandsynligheden for type 2 fejl når a=2.5 er altså 0.25. 
+
+## type 1 og type 2 fejl simuleret
+
+jeg kan simulere fra beta-fordelingen med rbeta. simulerer først type 1 fejl
+```{r}
+a = 3
+a_star = 2.5
+n <- 100
+N <- 10^4
+C = 0.57
+
+# type 1 fejl:
+mean.vec <- numeric(N)
+mean.vec2 <- numeric(N)
+
+for (i in 1:N) {
+  x1 <- rbeta(n, a, 2)
+  x2 <- rbeta(n, a_star, 2)
+  mean.vec[i] <- mean(x1)
+  mean.vec2[i] <- mean(x2)
+}
+
+p_val <- mean(mean.vec < C)
+c("type 1 fejl:", p_val)
+
+p_val2 <- mean(mean.vec2 >= C)
+c("type 2 fejl:", p_val2)
+```
+# . 
+# Opg 1 2023 august multipel regression
+## multipel regressionsmodel tjek om residualer er normalfordelte
+
+så vi skal opskrive den multiple regressionsmodel med 4 variable og 17 patienter i alt
+$$
+M_1: X_i \sim N(\alpha + t_{i1} \cdot t1 + t_{i2} \cdot t2 + t_{i3} \cdot t3 + t_{i4} \cdot t4, \sigma^2),  i=1,...,17
+$$
+grafisk tjek af om residualerne er normalfordelte
+```{r}
+lmfit1 <- lm(x ~ t1 + t2 + t3 + t4, data = amitrip)
+residualer <- residuals(lmfit1) 
+qqnorm(residualer, col = "skyblue2")
+qqline(residualer, col = "orange")
+```
+## backward selektion
+```{r}
+lmfit1 <- lm(x ~ t1 + t2 + t3 + t4, data = amitrip)
+summary(lmfit1)
+#osv...
+anova(lmfit3, lmfit1)
+```
+## estimater og 95%-konfidensintervaller for skæringen samt regressionskoeficienterne i M2
+```{r}
+lmfit3 <- lm(x ~ t1 + t3, data = amitrip)
+coef(lmfit3) # giver parameterskøn
+confint(lmfit3) #giver 95% konfidensinterval for parametrene
+```
+## 95%-prædiktionsinterval givet værdier
+```{r}
+lmfit3 <- lm(x ~ t1 + t3, data = amitrip)
+nyData = data.frame(t1 = c(1100), t3 = c(80))
+predict(lmfit3, nyData, interval = "prediction")
+```
+## 95% konfidensinterval for præcisionen
+
+aflæs sigma i summary og aflæs df i summary!!
+dette kan jeg gøre ved at finde 95% konfidensinterval for sigma og så regne ud for 1/sigma
+```{r}
+alpha = 0.05
+df_value= 14
+sigma2 <- sigma(lmfit3)^2
+c(sigma2/(qchisq(1-alpha/2, df = df_value)/df_value), sigma2/(qchisq(alpha/2, df = df_value)/df_value))
+c(1/56152.16, 1/12100.99)
+```
+
+# .
+# Opg 2 2023 august multinomialmodellen
+## test af hypotesen om ens præferencer, ens sandsynlighed
+
+for 4 kasser har vi
+$$
+H_0: \pi_i =0.25 , i=1,2,3,4
+$$
+vi tester så ud fra de forventede værdier
+```{r}
+observerede <- c(21,6,9,8)
+kasser = 4
+frie_parametre = 0
+n = 44
+forventede = c(44/4, 44/4, 44/4, 44/4)
+
+#beregn teststørrelse 
+Gobs = 2*sum((observerede*log(observerede/forventede))) 
+Gobs
+
+#beregn p-værdi
+1-pchisq(Gobs,kasser-1-frie_parametre) 
+```
+## redegørelse for likelihoodfunktionens form
+
+likelihoodfunktionen er
+$$
+L(\pi) = \begin{pmatrix} 44 \\ a_1 \cdot a_2 \cdot a_3 \cdot a_4 \end{pmatrix} \cdot \pi_1^{a_1} \cdot \pi_2^{a_2} \cdot \pi_3^{a_3} \cdot \pi_4^{a_4}
+$$
+indsæt og få svaret. 
+
+## forventede værdier under H1
+
+med oplyste sandsynligheder
+```{r}
+phat = (6+9+8)/132
+forventedeH1 = n*c((1-3*phat), phat, phat, phat) #SKAL RETTES!
+forventedeH1
+sum(forventedeH1)
+```
+## test af hypotesen H1
+```{r}
+observerede <- c(21,6,9,8)
+phat = (6+9+8)/132
+forventedeH1 = n*c((1-3*phat), phat, phat, phat) #SKAL RETTES!
+frie_parametre = 1
+n = 44
+
+#beregn teststørrelse 
+Gobs = 2*sum((observerede*log(observerede/forventedeH1))) 
+Gobs
+
+#beregn p-værdi
+1-pchisq(Gobs,kasser-1-frie_parametre) 
+```
+## maksimum likelihood estimatet
+indsæt, log likelihood differentier sæt lig 0 og isoler.
+# .
+# Opg 4 2023 august parret eller uparret test(matched pairs) forskel i middelværdi
+```{r}
+#skriv ind
+bilister <- read.csv("bilister.csv")
+foer <- bilister$foer
+efter <- bilister$efter
+
+#kør, tjek om det er med tilbagelægning, det er det når det er den med -1 og 1 som her!
+obs = mean(efter)-mean(foer)
+d = efter - foer
+n = length(d)
+N <- 10^4 - 1
+result <- numeric(N) 
+for (i in 1:N) {
+signs <- sample(c(-1,1),n,replace=TRUE) #med tilbagelægning!!
+result[i] <- mean(signs*d) 
+}
+
+(sum(result >= obs) + 1)/(N + 1) 
+```
+
+# . 
+# Opg 1 2024 juni normalfordeling for estimator
+
+Vi har at for en normalfordeling for en estimator er et 95% konfidensintervallet som
+$$
+[\bar{x}-1.96\cdot sd, \quad \bar{x}+1.96\cdot sd]
+$$
+vi får altså 
+```{r}
+xbar <- 0.8557
+sigma <- 0.0618
+#så vi får
+lower <- xbar - 1.96*sigma
+upper <- xbar + 1.96*sigma
+c(lower, upper)
+```
+# .
+# Opg 2 2024 juni bias af theta, unbiased, momentestimator
+## bias af theta, unbiased
+
+Er $\hat{\theta}_{mle}$ unbiased? Giv et kort teoretisk argument for dit svar.
+en unbiased estimator har 
+$$
+Bias(\hat{\theta}_{mle}) = E_{\theta}(\hat{\theta}_{mle}) - \theta = 0
+$$
+vi kan nu bruge jensens ulighed der siger: : lad G være en strengt konveks funktion og X en ikke degenereret stokastisk variabel, så er
+$$
+E(g(x))>g(E(X))
+$$
+det betyder altså at vi har at
+$$
+E(\hat{\theta}_{mle}) = E(2n/(\sum_{i=1}^{n}X_i^2)) > 2n/(\sum_{i=1}^{n}E(X_i^2))
+$$
+vi kan nu bruge at vi fra opgaven har at
+$$
+EX^2 = 2/\theta
+$$
+som altså betyder at
+$$
+2n/(\sum_{i=1}^{n}E(X_i^2)) = 2n/(\sum_{i=1}^{n}2/\theta) = 2n(2n/\theta) = \theta 
+$$
+og vi har dermed vist at
+$$
+E(\hat{\theta}_{mle}) > \theta
+$$
+og dermed kan det altså ikke være unbiased. 
+
+## momentestimatoren udledelse
+
+Angiv formlen for momentestimatoren, $\hat{\theta}_{mom}$. 
+vi har fra opgaven at 
+$$
+E(X)=3\sqrt{\pi}/(4\sqrt{\theta})
+$$
+vi finder da $\hat{\theta}_{mom}$ ved at sætte den lig med det empiriske moment
+$$
+M_1 = 1/n \cdot \sum_{i=1}^{n}X_i
+$$
+Dette giver mig
+$$
+3\sqrt{\pi}/(4\sqrt{\theta}) = 1/n \cdot \sum_{i=1}^{n}X_i
+$$
+$$
+\Leftrightarrow (4\sqrt{\theta}) \cdot \sum_{i=1}^{n}X_i = 3n\sqrt{\pi} \Leftrightarrow \sqrt{\theta} = 3n\sqrt{\pi}/ (4\sum_{i=1}^{n}X_i) 
+$$
+$$
+\Leftrightarrow \hat{\theta}_{mom} = (3n\sqrt{\pi}/ (4\sum_{i=1}^{n}X_i))^2 
+$$
+som så er momentestimatoren. 
+
+## simulation af momentestimator og MSE
+
+```{r}
+theta = 5
+n = 10
+Nsim = 10000
+alpha = 2
+theta_mle <- numeric(Nsim)
+theta_mom <- numeric(Nsim)
+for (i in 1:Nsim){
+  Z <- rgamma(n, shape=alpha, rate = theta)
+  X <- sqrt(Z)
+  theta_mle[i] <- 2*n/(sum(X^2))
+  theta_mom[i] <- (3*n*sqrt(pi)/(4*sum(X)))^2
+}
+mean(theta_mle)
+mean(theta_mom)
+c("bias theta_mle:", mean(theta_mle)-5)
+c("bias theta_mom:", mean(theta_mom)-5)
+c("MSE theta_mle:", mean((theta_mle-theta)^2))
+c("MSE theta_mom:", mean((theta_mom-theta)^2))
+```
+
+# . 
+# Opg 4 2024 juni
+## 95% konfidensinterval for standardafvigelsen i model M1
+
+Angiv et 95% konfidensinterval for standardafvigelsen $\sigma$ i modellen M1.
+
+vi har fra formel 2.17 i de supplerende noter at vi kan finde konfidensintervallet af $\sigma$ med
+$$
+[fs^2(X)/(\chi^2_{1-\alpha/2}(f)), \quad fs^2(X)/(\chi^2_{\alpha/2}(f))]
+$$
+vi kan aflæse s i summary
+```{r}
+summary(lmfit)
+```
+som giver
+```{r}
+s = 10.06
+antal_obs = 60
+alpha = 0.05
+
+f = antal_obs-1
+lower <- f*s^2/qchisq(1-alpha/2, df = f)
+upper <- f*s^2/qchisq(alpha/2, df = f)
+
+c(sqrt(lower), sqrt(upper))
+```
+
+
+## hypotesen om additiv model 
+
+jeg har altså hypotesen
+$$
+H_{0\mu}: \mu_i = \alpha_i + \beta_l, i=1,2,3, l=1,2
+$$
+hvor i er de 3 produktionstyper og l er de to æggestørrelser. 
+jeg vil altså gerne vise modellen
+$$
+M_2: X_{ilj} \sim N(\alpha_i + \beta_l,\sigma^2), \quad  i=1,2,3, \quad  l=1,2, \quad j=1,...,10
+$$
+for den grafiske undersøgelse laver jeg redisualplot
+```{r}
+lmfit_m2 <- lm(respons_variabel ~ aeg$type + aeg$stor)
+residualer <- lmfit_m2$residuals
+
+#lav qqplot over residualerne
+qqnorm(residualer, col = "purple2")
+qqline(residualer, col = "green3")
+```
+
+jeg sammenligner så med anova for at tjekke om jeg kan reducere modellen
+```{r}
+anova(lmfit_m2,lmfit)
+```
+
+# . 
+# Opg 2 2024 aug bias af alpha og beta fra specifik for opgaven fordeling
+
+Jeg skal også kigge på om estimatores er unbiased eller biased. her har jeg fået at vide at $E(log(X_1/\beta)) = 1/\alpha$
+jeg kan her bruge jensens ulighed der siger
+$$
+E(g(x))>g(E(X))
+$$
+altså at
+$$
+E(\hat{\alpha}) = E(n/(\sum_{i=1}^{n}log(x_i/\beta))) > n/(\sum_{i=1}^{n}E(log(x_i/\beta))) = n/(\sum_{i=1}^{n}1/\alpha) = n/(n/\alpha))=\alpha
+$$
+så dermed har vi altså 
+$$
+E(\hat{\alpha}) >\alpha \Rightarrow bias(\hat{\alpha}) > 0 
+$$
+og vi ser altså at $\alpha$ har positiv bias. 
+
+
+# . 
+# Opg 4 2024 aug permutationstest for varianshomogenitet mellem to grupper
+
+```{r}
+obj <- sim$x
+
+obs = var(xa$x)/var(xb$x)
+oneofthem = xa$x
+
+N <- 10^4 - 1
+result <- numeric(N) 
+for (i in 1:N) {
+  index <- sample(length(obj), size = length(oneofthem), replace = FALSE)
+  result[i] <- var(obj[index])/var(obj[-index])
+}
+
+#og finder p-værdien
+pval = (2*min(sum(result < obs),sum(result >= obs)) + 1) / (N+1)
+pval
+```
+
+# . 
+
+# . 
+# ekstra fra spørgetime
+##Homogenitetstest vs. uafhængighedstest
+homogenitetstest: model 
+$$
+(A_{i1},...,A_{ik}) \sim multinom(n_i,(\pi_{i1},...,\pi_{ik})), i=1,...,r, \pi_{ij}>=0, \sum_{i=1}^n\pi_{ij}=1
+$$
+$$
+H_0: \pi_{ij} = \pi_j, i=1,...,r, j=1,...,k
+$$
+uafhængighedstest: model
+$$
+(A_{11},...,A_{rk}) \sim multinom(n,(\pi_{11},...,\pi_{rk}))
+$$
+$$
+H_0: \pi_{ij} = \alpha_i \cdot \beta_j
+$$
+se diskussion ved ligning 8.15 i supplerende noter. 
+
+
+
+## om permutationstest
+nulhypotese:
+$$
+H_0:\mu_{før} = \mu_{efter}
+$$
+alternativhypotese
+$$
+H_A:\mu_{efter}>\mu_{før}
+$$
+14 par, regn $\bar{X}_{efter}-\bar{X}_{før}$
+$$
+p_{obs}= (sum(result\geq observed)+1)/(N+1)
+$$
+hvis $H_A:\mu_{efter} \ne \mu_{før}$, så er
+$$
+p_{obs}=min(sum(result\leq observed), sum(result \geq observed)+1)/(N+1)
+$$
+hvor N er antal simuleringer. 
+grunden til at det er N+1 er fordi man tæller den oprindelige stikprøve med og derfor har vi så N+1 i bunden også. 
+
+## . 

@@ -1,0 +1,612 @@
+
+##hyppighedstabel
+danner hyppighedstabel ud fra data 
+
+pseudokode:
+```{r}
+dat<-#read.csv
+#danner hyppighedstabel
+tab<-table(dat$kat1,dat$kat2)
+tab
+#normalisere til sandsynligheden for den enkelt(se at summen af alle felter =1)
+prop.table(tab)
+#colonner summer til 1
+prop.table(tab,1)
+
+```
+
+
+##barplot
+
+danner barplot
+meget simpelt 
+kan tage tabel og hvilket gør det nemt
+```{r}
+barplot(tab)
+```
+
+##boxplot
+plotter boxplot af data givet data 
+man kan både plotte et enkelt plot ad gangen men også flere ved siden af hinanden defineret via katagoriske variable i data 
+```{r}
+dat<-#read.csv("data")
+#simpelt boxplot
+boxplot(dat$num1)
+#flere boxplots
+boxplot(dat$num1~dat$kat1)
+```
+
+
+
+
+##histogram
+
+danner histogram uf fra vector
+
+kan omdanne til SS ved 
+```{r}
+#standard histogram
+hist(dat$num1)
+#prop
+hist(dat$num1,freq=FALSE)
+#andre breaks
+hist(dat$num1,breaks=50)
+#breaks kan tage alt fra et antal af inddelinger til en vector der bestemmer inddelingern 
+```
+
+
+
+##mean
+tager numerisk vector og finder middelværdiern 
+```{r}
+#standard
+mean(dat$num1)
+
+#trimmer de 20% værste og 20% bedste
+mean(dat$num1,trim=0.2)
+
+
+```
+
+
+##fivenum
+tager numerisk vector
+returnerer min,Q_1,median,Q_3,max
+```{r}
+fivenum(dat$num1)
+```
+
+##plot.ecdf
+tager numerisk vector
+plotter den emperiske fordelingsfunction 
+```{r}
+plot.ecdf(dat$num1)
+```
+
+
+##qqplot
+
+normalfordelt 
+```{r}
+qqnorm(dat$num1)
+qqline(dat$num1)
+```
+
+
+generel fordeling
+```{r}
+dat$num1sorted<-sort(dat$num1sorted)
+F<-#en eller anden fraktilfunktion
+plot(F(dat$num1sorted)~dat$num1sorted)
+```
+
+
+
+
+##multiple qqplots
+```{r}
+# Extra R funktioner til Matematisk Statistik
+# (uh, 2019, 2021)
+#
+# deskriptiv analyse: qq plot og qqline (se MSRR, 2.4)
+#
+# Her får I en funktion der laver simultan qq-plot når data
+# stammer fra flere grupper
+# Valgtfrit kan der tilføjes en qqline til hver gruppe
+#===================================================================#
+
+# meaning of arguments:
+# y:       data vector
+# groups:  a vector with group assignment
+# col:     colours, one for each group. If NULL, take R colors from 1 to number of groups
+# pch:     plot character, one for each group, as col.
+# main:    title, xlab, ylab: labels of x- and y-axis
+# ...:     further plot parameters, for example line type (lty) or line thickness (lwd)
+# legend:  if a legend should be added, set to TRUE
+# qqlines: if qqlines should be added, set to TRUE.
+
+# # eksempel:
+# # fake højde af 20 mænd og kvinder
+# 
+# hojde_m <- rnorm(20, mean = 180, sd = 8)
+# hojde_k <- rnorm(20, mean = 167, sd = 7)
+# hojde <- c(hojde_k, hojde_m)
+# 
+# # lav gruppe variable, faktor
+# koen_char <- c(rep("K", 20), rep("M", 20))
+# koen <- as.factor(koen_char)
+# 
+# # forskelligt pyntede plots:
+# qqnorm_multi(hojde, koen)
+# qqnorm_multi(hojde, koen, pch = c(21,16), qqlines = FALSE, 
+#              main = "normal qq plot without qqlines")
+# qqnorm_multi(hojde, koen, col = c("red", "blue"), pch = 21, lty = "dashed")
+
+qqnorm_multi <- function(y, groups, col = NULL, pch = NULL, 
+   main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles",
+                           ..., legend = TRUE, qqlines = TRUE){
+  # lidt fejlbehandling
+  if (missing(y)) stop ("no data given")
+  if (missing(groups)) stop ("no groups given")
+  if (length(y) != length(groups)) stop ("y and groups need to be vectors of same length")
+  
+  # lav en faktor variabel, hvis ikke groups allerede er det
+  groups = factor(groups)
+  # valg farver og symboler hvis de mangler
+  ngroups <- nlevels(groups)
+  if (is.null(col)) col <- 1 : ngroups
+  col <- rep(col, length.out = ngroups)
+  if (is.null(pch)) pch <- 1 : ngroups
+  pch <- rep(pch, length.out = ngroups)
+  # beregn værdier
+  allqq <- tapply(y, groups, qqnorm, plot.it = FALSE)
+  xrange <- range(sapply(allqq, function(res) range(res$x)))
+  yrange <- range(sapply(allqq, function(res) range(res$y)))
+  plot(xrange, yrange, type="n", xlab = xlab, ylab = ylab, main = main)
+  for (i in seq_along(allqq)) {
+    points(allqq[[i]], col = col[i], pch = pch[i], ...)
+    if (qqlines) qqline(allqq[[i]]$y, col = col[i], ...)
+  }
+  if(legend) legend("topleft", legend = names(allqq), col = col, pch = pch)
+}
+```
+bare kald 
+```{r}
+qqnorm_multi(dat1$num1,dat1$group)
+```
+
+
+##subests
+
+
+
+##utest
+tager numerisk vector
+```{r}
+#utest
+mu0<-#middelværdi under hypotesen
+sigma0<-#kendt varians
+utest<-(mean(dat$num1)-sigma0)/sqrt(sigma0^2/length(dat$num1))
+pværdi<-2*(1-qnorm(utest))
+pværdi
+```
+
+
+
+##ttest 1 række
+tager en numerisk vector
+tester som default om hypotesen er lig 0
+```{r}
+t.test(c(1.2,1.5,1.7,12,15,21,3),mu=8)
+```
+
+
+##ttest 2 rækker
+tager 2 numeriske vectorere og et argument om varianshomogenitet 
+
+```{r}
+t.test(dat$num1,dat$num2,var.equal=TRUE)
+
+
+```
+
+
+
+##var.test
+tager 2 numeriske vektorer
+tester om deres varianser er den samme
+antager at data er normaltfordelt og deltt ud i 2 grupper 
+```{r}
+var.test(dat$num1,dat$num2)
+```
+
+
+
+##bartletts test
+samme princip som var.test
+
+kan tage n numeriske vectorer 
+
+ba
+
+```{r}
+c1<-c(1,2,3,45,6,7,8)
+d1<-c(5,7,8,6,4,4,5,45,4,5)
+bartlett.test(list(c1,d1))
+```
+men kan også tage allerede fittede LM'ere hvilket normalt er nice at arbejde med.
+```{r}
+c<-lm(c1~1)
+d<-lm(d1~1)
+bartlett.test(list(c,d))
+```
+
+kan også bare tage et modelkald
+```{r}
+bartlett.test(dat$num~dat$gruppe)
+```
+her skal grupper være faktorer for at lave interaktion laver man bare
+```{r}
+dat$gruppe<-interaktion(gruppe1,gruppe2)
+```
+
+
+
+
+
+##curve
+tager en funktion f og et interval 
+
+```{r}
+curve(f,minværdi,maxværdi)
+```
+
+##lineær regression 1 variable 
+tager 2 numeriske vektorer
+1 af forklarende variable
+1 af responsvariable
+
+definer variable:
+```{r}
+respons<-#træk fra data
+forklarende<-#træk fra data 
+```
+
+model fit:
+```{r}
+linmodel<-lm(respons~forklarende)
+```
+
+scatterplot med linje
+
+```{r}
+plot(respons~forklarende)
+abline(linmodel)
+```
+
+residualplot
+```{r}
+plot(linmodel$residuals~forklarende)
+```
+
+
+
+qqplot af studentised residuals
+```{r}
+h=1/length(forklarende)+(forklarende-mean(forklarende))^2/SSD(forklarende)
+studres<-linmodel$residuals/sqrt(1-h)
+qqnorm(studres)
+qqline(studres)
+```
+hvis residualerne ligger på en linje (der forhåbentligt skærer i 0) er de normaltfordelte
+
+
+
+##invers regression
+Funktion der beregner konfidensinterval for ukendte vÃ¦rdi 
+af forklarende variabel i regressionsmodel. Input er 
+output fra kaldet lm(x~t) og nye mÃ¥linger y.
+```{r}
+inversReg=function(lmUD,y){
+ sumUD=summary(lmUD)
+ xbar=mean(lmUD$model[,1])
+ m=length(y)
+ ybar=mean(y)
+ t0=qt(0.975,sumUD$df[2])
+ ahat=sumUD$coefficients[1,1]
+ bhat=sumUD$coefficients[2,1]
+ s2r=(sumUD$sigma)^2
+ ssdt=s2r/(sumUD$coefficients[2,2])^2
+ uA=bhat^2-t0^2*s2r/ssdt
+ if (uA>0){
+ uB=-2*t0^2*s2r*(ybar-xbar)/(bhat*ssdt)
+ uC=-t0^2*s2r*(1/m+1/(sumUD$df[2]+2)+(ybar-xbar)^2/(bhat^2*ssdt))
+ thetahat=(ybar-ahat)/bhat
+ konfInt=thetahat+(-uB+c(-1,1)*sqrt(uB^2-4*uA*uC))/(2*uA)
+ return(list(Estimat=thetahat,Konfidensinterval=konfInt))
+ } else {
+  return("Problem er ikke veldefineret da beta kan vÃ¦re nul")
+ }
+}
+```
+
+
+
+
+##additivitetsmodel 
+tager 1 responsvariable og 2 factorvektorer 
+plot additivitetsplot
+```{r}
+interaction.plot(factor1,factor2,respons)
+interaction.plot(factor2,factor1,respons)
+```
+
+fit grundmodel
+```{r}
+m0<-lm(respons~factor1*factor2)
+#alternativt
+m0<-lm(respons~factor1+factor2+factor1:factor2)
+```
+
+
+fit additivitetsmodel
+```{r}
+m1<-lm(respons~factor1+factor2)
+```
+
+kør anova
+```{r}
+anova(m1,m2)
+```
+
+
+
+se om 1 factor er ligemeget
+```{r}
+m21<-m1<-lm(respons~factor1)
+anova(m2,m21)
+```
+
+```{r}
+m22<-m1<-lm(respons~factor2)
+anova(m2,m22)
+```
+
+
+
+
+til slut husk og kør hele reduktionen for at se om den går 
+##gruppespecifik regression 
+
+tjek om de alle er lineære 
+dan subsets
+```{r}
+gruppe1<-subset(dat,subset= factor1=="gruppe1")
+gruppe2<-subset(dat,subset= factor1=="gruppe2")
+gruppe3<-subset(dat,subset= factor1=="gruppe3")
+grupper<-list(gruppe1,gruppe2,gruppe3)
+```
+```{r}
+grupper=c(1,23,4)
+par(mfrow=c(1,2))
+lineære_modeller<-list()
+for (gruppe in grupper){
+  lmi<-lm(respons~t,dat=gruppe)
+  plot(respons~t,dat=gruppe)
+  abline(lmi)
+}
+```
+
+
+##multiple lineær regresion 
+```{r}
+dat<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/reeksamen 2023/amitrip.csv")
+```
+
+```{r}
+head(dat)
+```
+```{r}
+factors<-list(dat$factor1,dat$factor2,dat$factor3,dat$factor4)
+par(mfrow=c(1,2))
+for (i in factors){
+  plot(dat$respons~i)
+}
+```
+
+fit lineær model
+```{r}
+limodel<-lm(respons~facto1+factor2+factorN,data=dat)
+```
+
+
+```{r}
+factors<-list(dat$factor1,dat$factor2,dat$factor3,dat$factor4)
+par(mfrow=c(1,2))
+for (i in factors){
+  plot(lm$residuals~i)
+}
+```
+
+##forward selection
+Funktionen forward finder den nÃ¦ste variabel, som inkluderes i 
+forward selection i en multipel regressionsmodel.
+Input er en matrix med vÃ¦rdierne af de forklarende variable, 
+en vektor x med respons og en vektor "med", der indeholder 
+sÃ¸jlenumrene pÃ¥ de forklarende variable, der allerede er inkluderet.
+
+```{r}
+forward=function(T,x,med=c()){
+d=dim(T)[2]; n=length(x)
+ma=ls.diag(lsfit(T[,1],x))$std.dev
+res=rep(ma,d)
+if (length(med)==0){lookup=c(1:d)} else {lookup=c(1:d)[-med]}
+for (i in lookup){
+ med1=c(med,i)
+ res[i]=ls.diag(lsfit(T[,med1],x))$std.dev
+ }
+sny=min(res)
+medny=which.min(res)
+med1=c(med,medny)
+ud=lsfit(T[,med1],x)
+uddiag=ls.diag(ud)
+betahat=ud$coef
+sds=uddiag$std.err
+pval=2*pt(-abs(betahat/sds),n-1-length(med1))
+return(list(sny=sny,med=med1,pval=pval))
+}
+```
+
+
+
+##
+
+
+
+
+
+
+
+
+##permutationstest 
+tage et datasæt med en indeling som vi skal teste om er signifikant eller om vi kan antage at inddelingen er ligegyldig
+vi går til dette når vi ikke kan sige at data har en eller anden fordeling
+
+
+simpel test om forskl i middelværdi(kunne ligeså godt være forskel i alt muligt andet )
+```{r}
+dat<-#hent data 
+obj<-dat$num1
+gruppe1<-subset(dat,subset = gruppe==gruppe1)$num1
+gruppe2<-subset(dat,subset = gruppe==gruppe2)$num1
+
+obs<-mean(gruppe1)-mean(gruppe2)
+
+N<-10^4
+result<-numeric(N)
+for (i in 1:N){
+  index<-sample(length(obj),size=length(gruppe1),replace = FALSE)
+  result[i]<-mean(obj[index])-mean(obj[-index])
+}
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+```
+
+
+
+
+##matched pairs
+2 observationstilfælde
+
+igen kigger vi på forskellen i middelværdi i 2 grupperinger denne gang med hver række har en naturlig inddeling også
+```{r}
+dat<-#hent data
+
+obs<-mean(dat$num1)-mean(dat$num2)
+
+d<-dat$num1-dat$num2
+n<-length(d)
+
+N<-10^4
+result<-numeric(N)
+for (i in 1:N){
+signs<-sample(c(1,-1),n,replace = TRUE)
+result[i] <- mean(signs*d)
+}
+
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+
+```
+
+
+
+##multinomial model
+tager en vektor af hændelser i hver gruppe
+
+```{r}
+A<-#hent data
+#regn vektoren af sandsynlighederne i m_1
+p<-#vector af data
+k<-#antal af frie parametre i m_1
+e<-p*sum(A)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+
+
+
+##goodness of fit 
+
+
+lav en indeling af din data og prug den til at lave A herfra gør som normalt
+```{r}
+A<-#hent data
+#regn vektoren af sandsynlighederne i m_1
+p<-#vector af data
+k<-#antal af frie parametre i m_1
+e<-p*sum(A)
+gtest<-2*sum(A*log(a/e))
+pval<-1-pchisq(gtest,lenth(p)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+##homogennitetstest test/uafh test
+tager en matrix af inputs
+række1,række2,række3...
+```{r}
+obs=rbind(c(16,4),c(15,19),c(7,30))
+ex=outer(rowSums(obs),colSums(obs))/sum(obs)
+obs1=ifelse(obs==0,1,obs) 
+G=2*sum(obs*log(obs1/ex))
+pval=1-pchisq(G,(dim(obs)[1]-1)*(dim(obs)[2]-1)) 
+c(Forventede=ex)
+c(G=G,Pvaerdi=pval)
+```
+
+
+
+
+
+
+
+
+
+##fischers test
+definer matrix række,række,række
+```{r}
+obs<-rbind(#rækker)
+fisher.test(obs)
+```
+
+
+##bootstrap
+
+```{r}
+my.sample<-rnorm(100)
+N <- 10^5
+my.boot <- numeric(N) 
+for (i in 1:N) {
+x <- sample(my.sample, replace = TRUE) # draw resample
+my.boot[i] <- mean(x) # compute mean, store in my.boot 
+}
+mean(my.boot) 
+sd(my.boot)
+```
+##prediktionsinterval
+skab nyt datapunkt hvor ALLE de parametre modellen predikterer ud fra er 
+```{r}
+nydata<-data.frame(num1=x,cat1=kat1)
+#for konfidensintervallet for middelværdien 
+predict(model,nydata,interval="confidence")
+#prediktionsintervallet for en ny observation med parametre specificeret
+predict(model,nydata,interval="prediction")
+
+```
+man kan køre mange på en gang da skal man bare sætte en vektor ind i "nydata"
+
+

@@ -1,0 +1,57 @@
+---
+title: "Eksamen i Matematisk Statistik, F 2019"
+author: "Angiv dit navn og studienummer her"
+date: "21.6.2019"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+documentclass: article
+classoption: a4paper
+---
+
+
+## Opgave 1 
+
+### (1.a) 
+
+
+### (1.b) 
+
+
+### (1.c) 
+
+
+
+************
+
+## Opgave 2 
+
+### (2.a) 
+
+
+### (2.b) 
+
+
+### (2.c) 
+
+
+### (2.d) 
+
+
+### (2.e) 
+
+
+************
+
+## Opgave 3 
+
+### (3.a) 
+
+
+### (3.b) 
+
+
+### (3.c) 
+
+

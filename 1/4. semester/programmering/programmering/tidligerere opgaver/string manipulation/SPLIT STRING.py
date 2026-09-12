@@ -1,0 +1,34 @@
+'''
+    SPLIT STRING
+
+    In this problem you should read a single string s from input and
+    output two lines: the first line containing the characters at the
+    even positions in s, and the second line the characters at the odd
+    positions in s.
+
+    Input:
+
+      A single string s only containing capital letters 'A'-'Z', with
+      length 2 <= len(s) <= 100.
+
+    Ouput:
+   
+      Two lines each containing a string. The first line should contain 
+      s[0]s[2]s[4]... and the second line s[1]s[3]s[5]...
+
+    Example:
+
+      Input:  ABCDEFG
+
+      Output: ACEG
+              BDF
+'''
+
+
+i=input()
+s=list(i)
+#print(s)
+even=[s[i] for i in range(len(s)) if i%2==0]
+uneven=[s[i] for i in range(len(s)) if i%2==1]
+print("".join(even))
+print("".join(uneven))

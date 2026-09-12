@@ -1,0 +1,318 @@
+---
+title: "eksamen 2024"
+date: "2025-05-29"
+---
+
+# opgave 1 
+## 1.a
+dette er blot et udflad fra en binomial fordeling da køre vi prop.test med et konfidensinterval på 0.95
+```{r}
+A<-c(96,47,64,70,67,77,79)
+prop.test(79,sum(A))
+```
+vi aflæser skønnet $\hat{p}=0.158$ og 95% konfidensintervallet er [0.1277415 , 0.1936355]
+## 1.b
+vi regner sandsynligheden for at være større end 35 under med parametre spcificeret gange totale antal
+```{r}
+rh<-0.8557
+lamh<-0.0449
+e35p<-(1-pgamma(35,rh,lamh))*sum(A)
+e35p
+```
+præcis som ønsket
+## 1.c
+$$M_0:(A_1,...,A_k)\sim Mulitinomial(n,(\pi_1,...,\pi_k))$$
+under hypotesen at de kommer fra en gammeforedling har vi 
+$$H_0:\pi_1=P(X\leq3)=F_X(3)\quad \pi_2=P(3< X\leq6)=F_X(6)-F_X(3),...,\pi_k=P(35< X)=1-F_X(35)$$
+hvor $X\sim \Gamma(r,\lambda)$
+li ønsker at lave et likelihhood ratiotest ved G teststørrelsen 
+vi har allerede fået estimaoterne for r og $\lambda$ som kasimerer likelihood under hypotesen og de forventede der høre til 
+da allle de forventede er større end 5 og G testoren derved er assymptotisk chi^2 fordelt er alt der mangler bare at finde antallet af frie parametre i hver model og køre G testen 
+
+i grundmodellen har vi 7 sandsynligheder men 1 lighedsbegrænsning da 7-1=6 frie parametre
+under H_0 har vi de 2 parametre i gammefordelingen 
+```{r}
+A<-c(96,47,64,70,67,77,79)
+e<-c(89.3,62.9,65.9,63.1,64,72.1,82.7)
+k<-2
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+p værdien er større end 0.05 da forkaster vi ikke hypotesen
+
+## 1.d
+da $\hat{r}$ er normalfordelt
+jeg antager at SE ikke er stokastisk
+```{r}
+rh<-0.8557
+se<-0.0618
+l<-rh+qnorm(0.025)*se
+h<-rh+qnorm(1-0.025)*se
+l
+h
+```
+altså har vi et konfidensinterval for r 
+[0.7345742 , 0.9768258]
+en gammafordeling er eksponentialordelt hvis og kun hvis r=1
+1 er ikke i 95% kofidensintervallet da strider hypotesen om at udfaldet er eksponentielfordelt imod data 
+
+
+# opgave 2 
+## 2.a
+vi skriver likelihood funktionen op
+$$L(\theta)=\prod_{i=1}^n2*\theta^2*x_i^3*exp(-\theta*x_i^2)$$
+vi tager log og maksimerer
+
+$$l(\theta)=n*log(2)+n*2*log(\theta)+3\sum_{i=1}^nlog(x_i)-\sum_{i=1}^n\theta*x_i^2 \newline \dfrac{\partial l}{\partial \theta}=\dfrac{2n}{\theta}-\sum_{i=1}^nx_i^2=0\Leftrightarrow \hat{\theta}_{MLE}=\dfrac{2n}{\sum_{i=1}^nx_i^2}$$
+vi tjekker den 2. afledte for at sikre at det er et maksimum 
+$$\dfrac{\partial^2 l}{\partial \theta^2}=-\dfrac{2n}{\theta^2}<0$$
+da har vi et maksimum
+## 2.b
+$$f(y)=\dfrac{1}{y}$$
+er strengt konveks i x'es support da 
+$$\mathbb{E}[1/X]>1/\mathbb{E}[X]$$
+$$\mathbb{E}[\hat{\theta}_{mle}]=\mathbb{E}[\dfrac{2n}{\sum_{i=1}^nX_i^2}]>\dfrac{2n}{\sum_{i=1}^n\mathbb{E}[X_i^2]}=\theta$$
+nej den er ike unbiased men burde være assymptotisk unbiased 
+## 2.c
+vi sætter de k første momenter lig deres teoretiske værdi vi har dog kun 1 parameter
+$$\bar{X}.=\mathbb{E}[X]=\dfrac{3\sqrt{\pi}}{4\sqrt{\theta}}\Leftrightarrow \sqrt{\theta}=\dfrac{3\sqrt{\pi}}{4\bar{X}.}\Leftrightarrow \hat{\theta}_{MOM}=\dfrac{9\pi}{16\bar{X}.^2}$$
+## 2.d
+del 1 
+```{r}
+theta<-5
+n<-10
+nsim<-10^4
+thmom<-numeric(nsim)
+thmle<-numeric(nsim)
+
+for (i in 1:nsim){
+  samp<-sqrt(rgamma(n,shape=2,rate=theta))
+  thmle[i]<-2*n/sum(samp^2)
+  thmom[i]<-9*pi/16/mean(samp)^2
+}
+"for MLE"
+c(bias=mean(thmle)-theta,MSE=mean((thmle-theta)^2))
+"for moment"
+c(bias=mean(thmom)-theta,MSE=mean((thmom-theta)^2))
+```
+vi ser at både MSE og bias er markant større for momentmetoden end for MLE
+
+hvis vi prøver at sætte n op så tænker jeg at vi ser nogenlunde det samme billede men at begge er tættere på
+i hvert fald MLE burde da det er en konsistent 
+```{r}
+theta<-5
+n<-100
+nsim<-10^4
+thmom<-numeric(nsim)
+thmle<-numeric(nsim)
+
+for (i in 1:nsim){
+  samp<-sqrt(rgamma(n,shape=2,rate=theta))
+  thmle[i]<-2*n/sum(samp^2)
+  thmom[i]<-9*pi/16/mean(samp)^2
+}
+"for MLE"
+c(bias=mean(thmle)-theta,MSE=mean((thmle-theta)^2))
+"for moment"
+c(bias=mean(thmom)-theta,MSE=mean((thmom-theta)^2))
+```
+jeg ser en væsentlig lavere MSE for begge og ved variance bias decomposition kan vi se at en stor del af det er fordi at variansen af estimatorene er faldet markant for begge hvilket giver super mening da estimatet bliver bedre for større stikprøver
+
+# opgave 3 
+## 3.a
+ja F-testet antager at data er normalfordelt.
+i koden simulerer vi fra 2 t fordelinger som man måske godt kunne argumenterer for er assymptotisk normalfordelt for store antal frihedsgrader men det tænker jeg ikke nødvendigvis 10 er 
+
+hul hypotesen er at de har fælles varians mens alternativet er at de ikke har 
+jeg slår variansen for t-fordelingens varians op
+variansen for en $T\sim t(k)$ fodeling er 
+$$\mathbb{V}(T)=\dfrac{k}{k-2}\quad for \quad \infty>k>2$$
+som er tilfældet 
+da regner vi varianserne og ser at de ikke er de samme
+```{r}
+20/(20-2)
+10/(10-2)
+```
+altså simuleres der fra alternativ hypotesen
+et hint til dette kunne også være
+
+## 3.b
+(iii) 
+ECDF plotter præcis andelen af de observerede som funktion af den observerede da tegner vi bare en linje fra 0.05 og aflæser 0.25
+
+# opgave 4
+jeg indlæser data
+```{r}
+dat1<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/eksamen 2024/aeg.csv",stringsAsFactors = T)
+head(dat1)
+```
+
+## 4.a
+$$M_0:skum_{i,j,k}\sim N(\mu_{j,k},\sigma^2_{j,k}) \quad for \quad i\in\{1,...,10\} \quad for\quad  j\in\{L,M\} \quad for\quad k\in\{skrabe,oeko,bur\}$$
+
+jeg laver simpelthen 6 lineære modeller og tjekker qqplts af deres residualer 
+```{r}
+unique(dat1$type)
+unique(dat1$stor)
+```
+jeg danner subsets 
+```{r}
+L<-subset(dat1,subset = stor=="L")
+M<-subset(dat1,subset = stor=="M")
+skrabeL<-subset(L,subset=type=="skrabe")
+skrabeM<-subset(M,subset=type=="skrabe")
+burL<-subset(L,subset=type=="bur")
+burM<-subset(M,subset=type=="bur")
+oekoL<-subset(L,subset=type=="oeko")
+oekoM<-subset(M,subset=type=="oeko")
+
+
+```
+hvorefter jeg fitter modeller
+```{r}
+lm1<-lm(skumvol~1,skrabeL)
+lm2<-lm(skumvol~1,skrabeM)
+lm3<-lm(skumvol~1,burL)
+lm4<-lm(skumvol~1,burM)
+lm5<-lm(skumvol~1,oekoL)
+lm6<-lm(skumvol~1,oekoM)
+```
+```{r}
+par(mfrow=c(1,2))
+#1
+qqnorm(lm1$residuals)
+qqline(lm1$residuals)
+#2
+qqnorm(lm2$residuals)
+qqline(lm2$residuals)
+#3
+qqnorm(lm3$residuals)
+qqline(lm3$residuals)
+#4
+qqnorm(lm4$residuals)
+qqline(lm4$residuals)
+#5
+qqnorm(lm5$residuals)
+qqline(lm5$residuals)
+#6
+qqnorm(lm6$residuals)
+qqline(lm6$residuals)
+
+```
+der er ikke noget der som sådan strider mod antagelsen om normalfordeling da de alle egentlig snorer sig fint om linjen på undtagelse af få outliers her er det også en smule svært at drage konklutioner på grund af de meget små datasæt
+```{r}
+boxplot(dat1$skumvol~dat1$type*dat1$stor)
+```
+i boxplottene ser vi også at 
+## 4.b
+vi kører en bartletts test
+```{r}
+bartlett.test(list(lm1,lm2,lm3,lm4,lm5,lm6))
+```
+p værdi på ca 0.5 er langt fra nul så der er ingen grund til at forkaste hypotesen om fælles varians 
+## 4.c
+$$M_1:skum_{i,j,k}\sim N(\mu_{j,k},\sigma^2) \quad for \quad i\in\{1,...,10\} \quad for\quad  j\in\{L,M\} \quad for\quad k\in\{skrabe,oeko,bur\}$$
+dimensionen af L er præcis antallet af grupper =6 da fitter vi modellen og bryger at variansestimatet er chi^2 fordelt 
+```{r}
+m1<-lm(skumvol~type*stor,data=dat1)
+summary(m1)
+```
+```{r}
+s=sigma(m1)^2
+```
+vi har 60 observationer og dim(L)=6 da har vi 54 frihedsgrader i fordelingen af stikprøvevariansen 
+$$s^2(X)\sim\chi^2(54)/54$$
+da har vi et konfidensinterval for variansen fra de supplerende noter 
+$$[\dfrac{54s^2(x)}{\chi^2_{1-\dfrac{\alpha}{2}}(54)}\quad  \dfrac{54s^2(x)}{\chi^2_{\dfrac{\alpha}{2}}(54)}]$$
+vi regner det ud 
+```{r}
+c(nedre=54*s/qchisq(1-0.025,df=54),oevre=54*s/qchisq(0.025,df=54))
+```
+
+## 4.d
+$$H_0:\mu_{j,k}=\alpha_j+\beta_k \quad for\quad  j\in\{L,M\} \quad for\quad k\in\{skrabe,oeko,bur\}$$
+for at se på det grafisk laver vi et interaktionsplot
+```{r}
+interaction.plot(dat1$type,dat1$stor,dat1$skumvol)
+interaction.plot(dat1$stor,dat1$type,dat1$skumvo)
+```
+den eneste krydsning vi ser er for burhønsene hvor M/L ikke ser ud til at gøre den store forskel vi ser bort fra den ene siden de stort set ikke krydser og går videre til en F test om modelreduktion via anova
+til 
+$$M_2:skum_{i,j,k}\sim N(\alpha_j+\beta_k,\sigma^2) \quad for \quad i\in\{1,...,10\} \quad for\quad  j\in\{L,M\} \quad for\quad k\in\{skrabe,oeko,bur\}$$
+
+```{r}
+m2<-lm(skumvol~type+stor,data=dat1)
+anova(m2,m1)
+```
+p værdi>0.05 betyder at vi ikke forkaster hypotesen, jeg vil dog begynde at være en smule skeptisk på baggrund af den (relativt) lave p værdi og interaktionsplottet som heller ikke var helt pænt
+## 4.e
+her bygger vi hypoteserne 
+$$
+H_0: \alpha_L=\alpha_M \newline 
+H_0^\star:\beta_{bur}=\beta_{skrabe}=\beta_{oeko}
+$$
+vi tester først H_0
+ved at bygge modellen 
+$$M_3:skum_{i,k}\sim N( \beta_k,\sigma^2) \quad for \quad i\in\{1,...,20\} \quad for\quad k\in\{skrabe,oeko,bur\}$$
+```{r}
+summary(m2)
+```
+vi tester hypotesen om modelreduktion 
+
+```{r}
+m3<-lm(skumvol~type,data=dat1)
+anova(m3,m2)
+```
+igen har vi en pværdi>0.05 da godtager vy hypotesen om modelreduktion 
+
+vi tjekker om modellen kan reduceres i bund til hypotesen en 1 normalfordelt observationsrække
+$$M_4:skum_{i}\sim N( \mu,\sigma^2) \quad for \quad i\in\{1,...,60\}$$
+```{r}
+m4<-lm(skumvol~1,data=dat1)
+anova(m4,m3)
+```
+hvor vi har en ekstremt lav p værdi altså forkastes hypotesen og vi slutter i m3
+
+
+
+
+
+
+
+
+
+vi tjekker også den anden vej 
+$$M_{3a}:skum_{i,j}\sim N( \alpha_j,\sigma^2) \quad for \quad i\in\{1,...,30\} \quad for\quad k\in\{M,L\}$$
+```{r}
+m3a<-lm(skumvol~stor,data=dat1)
+anova(m3a,m2)
+```
+som har en meget lav p værdi som derved også forkastes
+
+
+vi ender derved i m3 og køre lige et til anova kald for at se om den fulde modelreduktion også er værd at tro på
+```{r}
+anova(m3,m1)
+```
+denne har også en p værdi på over 0.05 da forkastes den ikke
+det at den er under 0.1 vil dog betyde at jeg stadig ville være en smule skeptisk 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

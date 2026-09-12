@@ -1,0 +1,44 @@
+---
+title: "aflevering 1"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-02-11"
+---
+
+## Aflevering 1
+
+lad F betegne :
+
+$$ F(x)=\begin{cases} 
+      1-e^{-\lambda*\sqrt{x}} & x\geq 0 \\
+      0 & ellers \\
+   \end{cases}
+$$ hvor $\lambda>0$
+
+```{r}
+#koden fra opgaven
+set.seed(150)
+N = 100
+Xsim = (rexp(N,rate=1))^2
+
+```
+
+## del 1
+
+vis at p-fraktilen $q_p$ for F er givet $$q_p = \dfrac{(log(1-p))^2}{\lambda^2}$$ $$q_p = \dfrac{(log(1-p))^2}{\lambda^2} \Leftrightarrow q_p*\lambda^2=(log(1-p))^2$$ $$\sqrt{q_p}*\lambda=log(1-p)\Leftrightarrow e^{\sqrt{q_p}*\lambda}=1-p$$ $$\Leftrightarrow p=1-e^{\sqrt{q_p}*\lambda}\text{  eller  }  p=F(q_p)$$ som er præcis definationen af p fraktilen når F er kontinuert
+
+```{r}
+
+index=(1:N-1/2)/N
+Faktiske_Kvartiler=sort(Xsim)
+Teoretsieke_Kvartiler=(log(1-index))^2
+plot(Faktiske_Kvartiler,Teoretsieke_Kvartiler)
+abline(a=0,b=1)
+```
+
+vi ser på grafen at siden at punkterne ligger op ad identitetslinjen er det rimeligt at tro på at observationsrækken har fordelingsfunktio F med $\lambda=1$
+
+## del 3
+
+siden observationsrækkerne er simulationer fra (rexp(N,rate=1))\^2 må simulationerne have fordelingen F med $\lambda=1$

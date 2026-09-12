@@ -1,0 +1,116 @@
+##oms 1.71
+a)
+$$
+SSD\sim \sigma_0^2*\chi^2(n-1)
+\newline
+\dfrac{SSD}{\sigma_0^2}\sim\chi^2(n-1)
+\newline
+\mathbb{A}=\{SSD:\mathbb{P}(\dfrac{SSD}{\sigma_0^2}\in[\chi^2_{\alpha/2}(n-1),\chi^2_{1-\alpha/2}(n-1)])\geq 0.95\}
+\newline
+\mathbb{A}=\{\sigma_0^2 *\chi^2_{\alpha/2}(n-1),\sigma^2*\chi^2_{1-\alpha/2}(n-1)\}
+$$
+b)
+$$
+\beta=\mathbb{P}(\sigma^2_0*q_1\leq SSD\leq\sigma_0^2*q_2)
+\newline
+SSD\sim \sigma_A^2*\chi^2(n-1)
+\newline
+\dfrac{SSD}{\sigma_A^2}\sim\chi^2(n-1)
+\newline
+\Rightarrow\beta=P(\dfrac{\sigma_0^2*q_1}{\sigma_A^2}\leq SSD \leq \dfrac{\sigma_0^2*q_2}{\sigma_A^2})
+\newline =F(\dfrac{\sigma_0^2*q_2}{\sigma_A^2})-F(\dfrac{\sigma_0^2*q_1}{\sigma_A^2})
+$$
+c)
+```{r}
+f<-function(x){pchisq(s0/x*q2)-pchisq(s0/x*q1)}
+f(2)
+```
+
+
+```{r}
+s0<-1
+nL<-c(10,40,400)
+a<-0.1
+fs<-vector("list" , length(nL))
+for (n in 1 : length(nL) ){
+  q1 <- qchisq( a/2 , nL[n]-1 )
+  q2 <- qchisq( 1-a/2 , nL[n]-1 ) 
+  fs[[n]] <- (function(q1_val, q2_val, df_val) {
+    function(x) {
+      pchisq(s0 / x * q2_val, df_val) - pchisq(s0 / x * q1_val, df_val)
+    }
+  })(q1, q2, df)
+}
+```
+```{r}
+for (f in fs){
+  curve(f(x),c(0.1,2))
+}
+```
+
+
+
+##oms 1.74
+```{r}
+dat<-c(16853,16553,16490,17399,16348,17019,17753)
+```
+a)
+$$
+(X_1,...,X_7)\sim multinom(n,(\pi_1,...,\pi_7))
+
+
+$$
+b)
+$$
+\Rightarrow \hat{p}=\dfrac{1}{7}
+$$
+```{r}
+e<-sum(dat)/7*rep(1,7)
+g<-2*sum(dat*log(dat/e))
+g
+```
+der er ingen frie parametre under hypotesen 
+
+```{r}
+1-pchisq(g,6)
+```
+nulhypotesen forkastes klart 
+
+c)
+
+```{r}
+over5<-c(2374,2511,2291,2497,2153,2282,2360)
+eover5<-sum(over5)/7*rep(1,7)
+g1<-2*sum(over5*log(over5/eover5))
+1-pchisq(g1,6)
+```
+
+```{r}
+renset<-c(780,847,793,831,785,821,779)
+erenset<-sum(renset)/7*rep(1,7)
+g2<-2*sum(renset*log(renset/erenset))
+1-pchisq(g2,6)
+```
+
+
+##oms 1.76
+
+
+
+##oms 1.79
+
+
+
+##oms 1.81
+
+
+$$
+X_i\sim pois(\lambda_i) \quad for \quad i \in\{1,...,n\}
+$$
+a)
+
+$$
+\sum_{i=1}^nX_i\sim pois(\sum_{i=1}^n\lambda_i)
+$$
+b)
+

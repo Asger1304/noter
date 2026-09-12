@@ -1,0 +1,31 @@
+"Processor","Year","Transistors"
+"Intel 4004 (4-bit, 16-pin)",1971,2250
+"Intel 8008 (8-bit, 18-pin)",1972,3500
+"Intel 8080 (8-bit, 40-pin)",1974,6000
+"Intel 8086 (16-bit, 40-pin)",1978,29000
+"Intel 8088 (16-bit, 8-bit data bus)",1979,29000
+"Intel 80286 (16-bit, 68-pin)",1982,134000
+"Intel 80386 (32-bit, 132-pin; no cache)",1985,275000
+"Intel 80486 (32-bit, 8 KB cache)",1989,1180235
+"Intel i960CF (32-bit, cache)",1992,9e+05
+"Pentium (32-bit, 16 KB of caches)",1993,3100000
+"Pentium II Klamath (32-bit, 64-bit SIMD, caches)",1997,7500000
+"Pentium III Katmai (32-bit, 128-bit SIMD, caches)",1999,9500000
+"Pentium 4 Willamette (32-bit, large cache)",2000,4.2e+07
+"Itanium 2 McKinley (64-bit, large cache)",2002,2.2e+08
+"Itanium 2 Madison 6M (64-bit)",2003,4.1e+08
+"Itanium 2 (64-bit;9 MB cache)",2004,5.92e+08
+"Pentium D Smithfield (64-bit, large cache)",2005,2.28e+08
+"Dual-core Itanium 2 (64-bit, SIMD, large caches)",2006,1.7e+09
+"Core 2 Duo Wolfdale (dual-core 64-bit, SIMD, caches)",2007,4.11e+08
+"Six-core Xeon 7400 (64-bit, SIMD, large caches)",2008,1.9e+09
+"Xeon Nehalem-EX (8-core 64-bit, SIMD, large caches)",2010,2.3e+09
+"Xeon Westmere-EX (10-core 64-bit, SIMD, large caches)",2011,2.6e+09
+"Xeon Phi (61-core 32-bit, 512-bit SIMD, caches)",2012,5e+09
+"Six-core Core i7 Ivy Bridge E (64-bit, SIMD, caches)",2013,1.86e+09
+"Xeon Haswell-E5 (18-core 64-bit, SIMD, caches)",2014,5.56e+09
+"Dual-core + GPU Iris Core i7 Broadwell-U (64-bit, SIMD, caches)",2015,1.9e+09
+"Xeon Phi (72-core 64-bit, 512-bit SIMD, caches)",2016,8e+09
+"Xeon Platinum 8180 (28-core 64-bit, SIMD, caches)",2017,8e+09
+"Core 11th gen Rocket Lake (8-core 64-bit, SIMD, large caches)",2021,6e+09
+"Sapphire Rapids quad-chip module (up to 60 cores and 112.5 MB of cache)",2023,4.4e+10

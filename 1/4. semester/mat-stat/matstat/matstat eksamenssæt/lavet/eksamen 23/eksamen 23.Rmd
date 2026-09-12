@@ -1,0 +1,283 @@
+---
+title: "eksamen 23"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-05-31"
+---
+```{r}
+set.seed(42)
+```
+
+# opgave 1 
+## 1.1
+jeg opstiler m_0 som en multinomialmodel med kasser for hver svarkatagori i hver gruppe altså:
+
+$$M_0:(A_{1A},A_{1B},...,A_{2C})\sim Mulitnomial(n,(\pi_{1A},\pi_{2A},..,\pi_{2C}))$$
+vi ønsker at teste hypotesen 
+$$H_0:\pi_{i,j}=\alpha_i*\beta_j\quad i=1,2\quad j=A,B,C$$
+hvor $\alpha_1+\alpha_2=1$ og $\beta_A+\beta_B+\beta_C=1$ og $\alpha_i,\beta_j\geq0$
+dette gør vi ved en G test vi har set i undervisningen
+ideen er at vi laver et test af en transformeret likelihood ratiotest som når de forventede er store nok i alle grupper er assymptotisk chi^2 fordelt
+så det gør vi 
+
+```{r}
+obs=rbind(c(15,17,57),c(40,56,35))
+ex=outer(rowSums(obs),colSums(obs))/sum(obs)
+obs1=ifelse(obs==0,1,obs) 
+G=2*sum(obs*log(obs1/ex))
+pval=1-pchisq(G,(dim(obs)[1]-1)*(dim(obs)[2]-1)) 
+c(Forventede=ex)
+c(G=G,Pvaerdi=pval)
+```
+de forventede er større end 5 alle sammen da er G testoren assymptotisk chi^2 fordelt med 
+antallet af frie parametre i grundmodellen 5 - antallet af frie parametre under hypotesen 3
+= 2 frihedsgrader
+
+p værdien er meget lav, vi forkaster derved hypotesen om uafhængighed af gruppe og svar
+
+svaret giver også god mening da vi i gruppe 1 ser at størstedelen(lidt under 2/3) vælger C mens gruppe 2 er meget mere spredt ud over de 3 muligheder
+
+## 1.2
+vi laver stort set den samme test hvor vi går fra 
+$$M_0:(A_{1A},A_{1B},...,A_{2D})\sim Mulitnomial(n,(\pi_{1A},\pi_{2A},..,\pi_{2D}))$$
+ned til 
+
+$$H_0:\pi_{i,j}=\alpha_i*\beta_j\quad i=1,2\quad j=A,B,C,D$$
+hvor $\alpha_1+\alpha_2=1$ og $\beta_A+\beta_B+\beta_C+\beta_D=1$ og $\alpha_i,\beta_j\geq0$
+vi kan starte med at forsøge at køre den samme fremgangsmåde som før 
+```{r}
+obs=rbind(c(2,1,1,10),c(4,5,4,4))
+ex=outer(rowSums(obs),colSums(obs))/sum(obs)
+obs1=ifelse(obs==0,1,obs) 
+G=2*sum(obs*log(obs1/ex))
+pval=1-pchisq(G,(dim(obs)[1]-1)*(dim(obs)[2]-1)) 
+c(Forventede=ex)
+c(G=G,Pvaerdi=pval)
+```
+cochrends regel siger at vi kan acceptere hvis 20% has forventning under 5 men da 75% har det i tilfældet er testoren ikke assumptotisk chi^2 fordelt og vi bliver derfor nødt til at køre fischers eksakte test 
+```{r}
+obs=rbind(c(2,1,1,10),c(4,5,4,4))
+fisher.test(obs)
+```
+fishers eksakte test har en p-værdi større end 0.05 da forkastes hypotesen ikke, jeg vil dog stadig være en smule skeptisk siden p-værdien er tæt på grænsen og relativt få observationer generelt
+
+# opgave 2 
+vi indlæser data 
+
+```{r}
+dat1<-read.csv("turtles.csv",stringsAsFactors = T)
+head(dat1)
+```
+
+## 2.1
+jeg vil gerne gører en bartletts test for at gøre det laver jeg subsets af de grupperede data og fitter lineære modeller hvorefter jeg får r til at lave en bartletts test af residualerne fra modellen
+
+```{r}
+A<-subset(dat1,subset= art=="A")
+B<-subset(dat1,subset= art=="B")
+C<-subset(dat1,subset= art=="C")
+mA<-lm(slagvolumen~blodtryk,data=A)
+mB<-lm(slagvolumen~blodtryk,data=B)
+mC<-lm(slagvolumen~blodtryk,data=C)
+```
+```{r}
+
+bartlett.test(list(mA$residuals,mB$residuals,mC$residuals))
+```
+p værdien for testen er større end 0.35>0.05 langt over 0.05 så det er rimeligt at antage fælles varians for at finde den fitter vi modellen og trækker variansen ud af R
+```{r}
+m1<-lm(slagvolumen~blodtryk*art,data=dat1)
+summary(m1)
+sigma(m1)^2
+```
+fra kaldet får vi variansskønnet som er
+$\sigma^2 \leftarrow s^2(x)=1.302$
+
+
+## 2.2
+som modelkontrol vil jeg gerne tjekke følgende:
+normalitet af residualerne ved qqplot 
+at de ikke anfænger af de forklarende variable, i dette tilfælde bare blodtryk
+
+```{r}
+qqnorm(m1$residuals)
+qqline(m1$residuals)
+```
+vi ser at enderne har et par outliers men siden vi stadig har et relativt småt datasæt er det ikke nok til at tvivle på normalitetsantagelsen da data ellers ligger fint på linjen
+
+```{r}
+plot(m1$residuals~dat1$blodtryk)
+```
+plottet ligner bare støj, dette stemmer over ens med antaglesen om at residualerneikke afhænger af bodtrykket og at deres varianser er ens
+
+
+## 2.3
+vi gør det med et f-test som vi laver med anova fra m1 til m2(specificeret i opgaven lige under)
+
+```{r}
+m2<-lm(slagvolumen~blodtryk+art,data=dat1)
+summary(m2)
+anova(m2,m1)
+```
+en p værdi på 0.19>0.05 betyder at vi ikke forkaster hypotesen og at det er rimeligt at antage fælles hældning 
+skæ
+
+## 2.4
+dim(L) = 4 for modellen da vektoren der består af blodtrykkene helt klart ikke er en linearkombination af indikator fuktioner for hver gruppe da dette ville betyde at alle skildpader i hver gruppe ville skulle have samme blodtryk
+
+da har vi at 
+$$s^2(X)\sim\sigma^2*\dfrac{\chi^2(26)}{26}$$
+da konstruere vi et konfidensinterval for $\sigma^2$ ud fra det stokastiske interval udledt under
+$$1-\alpha=P(\chi^2_{\alpha/2}(26)\leq\dfrac{s^2(X)}{\sigma^2}*26\leq \chi^2_{1-\alpha/2}(26))$$
+$$\chi^2_{\alpha/2}(26)\leq\dfrac{s^2(X)}{\sigma^2}*26\leq \chi^2_{1-\alpha/2}(26) \Leftrightarrow\dfrac{\chi^2_{\alpha/2}(26)}{s^2(X)*26}\leq\dfrac{1}{\sigma^2}\leq\dfrac{\chi^2_{1-\alpha/2}(26)}{s^2(X)*26}$$
+$$\Leftrightarrow\dfrac{s^2(X)*26}{\chi^2_{1-\alpha/2}(26)}\leq\sigma^2\leq\dfrac{s^2(X)*26}{\chi^2_{\alpha/2}(26)}$$
+som korresponderer til konfidensintervallet 
+$$[\dfrac{s^2(x)*26}{\chi^2_{1-\alpha/2}(26)} \quad ,\quad\dfrac{s^2(X)*26}{\chi^2_{\alpha/2}(26)}]$$
+hvor vi henter variansskønnet direkte fra R
+```{r}
+s2<-sigma(m2)^2
+alp=0.05
+c(lav=s2*26/qchisq(1-alp/2,df=26),høj=s2*26/qchisq(alp/2,df=26))
+```
+
+
+## 2.5
+konfidensintervallerne for vi nemmest ved at rykke lidt rundt i modellen så r ikke har en referencegruppe hvilket er helt ekvivalent. alternativt kan vi bare regne dem 
+```{r}
+m3a<-lm(slagvolumen~0+art+blodtryk,data=dat1)
+confint(m3a)
+```
+her lædser vi bare 95% konfidensintervallerne direkte
+$\alpha_A$: [2.8072498  ,6.1909190]
+$\alpha_B$: [3.6642088  ,7.0264864]
+$\alpha_C$: [4.8220277  ,8.2630858]
+
+# opgave 3
+
+## 3.1
+da $b=2$ skal vi kun finde estimatoren for en enkelt parameter som vi gør ved at sætte middelværdien lig gennemsnittet
+$$\bar{X}.=\dfrac{a}{a+2}\Leftrightarrow a=\bar{X}.(a+2)\Leftrightarrow \hat{a}=\dfrac{2\bar{X.}}{1-\bar{X}.}$$
+gennerelt i momentmetoden vil vi får at finde estimatorer til k variable sætte de teoretiske værdier for de k første momenter lig deres empiriske værdier
+
+## 3.2
+kode fra opgave:
+```{r}
+set.seed(42)
+my.sample <- rbeta(100, 3, 2)
+```
+jeg laver bootstrapfordelingen for momentestimatoren med 10
+```{r}
+N <- 10^5
+my.boot <- numeric(N) 
+for (i in 1:N) {
+x <- sample(my.sample, replace = TRUE) 
+my.boot[i] <- 2*mean(x)/(1-mean(x))
+}
+```
+jeg plotter  et histogram for at skønne bootstrapfordelingen
+```{r}
+hist(my.boot,freq=F,breaks=50)
+```
+vi regner kvartilerne og tegner dem ind på histogrammet
+```{r}
+quantile(my.boot,probs=c(0.05,0.95))
+```
+```{r}
+hist(my.boot,freq=F,breaks=50)
+abline(v=2.524284)
+abline(v=3.289838)
+```
+
+
+## 3.3
+den gennerelle grænseværdisætning siger at gennemsnittet konvergerer i fordeling mod en normafordeling
+for store nok n betyder det at vi kan approximere gennemsnittet som normalfordelt 
+for begrænset middelværdi og varians
+$$X_1,...X_n \quad i.i.d\quad -\infty<E[X_i]<\infty\quad V(X_i)<\infty$$
+da for store n 
+$$\bar{X}.\approx N(E[X],\dfrac{V(X)}{n})$$
+for $X_i\sim Beta (a,2)$ har vi specifikt
+$$\bar{X}.\approx N(\dfrac{a}{a+2},\dfrac{2a}{n(a+2)^2(a+3)})$$
+
+$$\Leftrightarrow\dfrac{\bar{X}.-\dfrac{a}{a+2}}{\sqrt{\dfrac{2a}{n(a+2)^2(a+3)}}}\approx N(0,1)$$
+under hypotesen:
+```{r}
+mu<-3/5
+va<-2*3/(5^2*6)
+c(mu=mu,varians=va)
+```
+
+$$\dfrac{\bar{X}.-0.6}{\sqrt{0.04/n}}\sim N(0,1)$$
+en mindre værdi af a betyder en mindre middelværdi af middelværdien hvor større medfører større middelværdi altså for hypotesen vil det kun give mening at lave en test hvor kun lave værdier er kritiske 
+da det er normaltfordelt regner vi bare p værdien for udfladet 
+
+jeg regne p værdien i tilfældet 
+```{r}
+xb<-0.59
+n<-100
+p<-pnorm((xb-mu)/sqrt(va/n),lower.tail = T)
+p
+```
+p værdi markant større end 0.05 betyder at udfaldet ikke er kritisk for hypotesen om 
+
+## 3.4 
+chancen or type 1 fejl er præcis chancen for at forkaste hypotesen selvom den er sand 
+ved normalapproximationen skal vi bare regne 
+$$P(\bar{X}.<C)\approx P(Z\leq\dfrac{C-0.6}{\sqrt{0.04/n}})$$
+hvor $Z\sim N(0,1)$
+```{r}
+pnorm((0.57-0.6)/sqrt(va/n))
+```
+
+
+for type 2 fejl skal vi regne sandsynligheden for ikke at forkaste hypotesen under alternativ hypotesen
+$$P_{\theta_A}(\bar{X}.\geq C)=1-P_{\theta_A}(\bar{X}.\leq C)$$
+vi retter egentlig bare forventningen og variansen under alternativhypotesen og rener præcis det samme som før 
+da den underliggende fordeling er den samme 
+```{r}
+muA<-2.5/(2+2.5)
+vaA<-2*2.5/(4.5^2*5.5)
+1-pnorm((0.57-muA)/sqrt(vaA/n))
+```
+
+altså har vi en ca 25% chance for at accepterer hypotesen under den alternative hypotese
+
+## 3.5 
+```{r}
+C=0.57
+```
+jeg laver 10000 middelværdier under h_0 og tæller antallet af dem som er under C altså de gange hvor vi forkaster hypotesen  så taget jeg det antal over N
+(egentlig laver jeg en liste i stedet for en tælling og summer over den til sidst)
+
+
+```{r}
+N <- 10^4
+antal <- numeric(N) 
+for (i in 1:N) {
+x <-  rbeta(100, 3, 2)
+antal[i] <- sum(mean(x)<C)# compute mean, store in my.boot 
+}
+sum(antal)/N
+```
+
+hvor jeg får en sandsynlighed for type 1 fejl på omkring 6.4%
+
+for type 2 fejlen laver jeg stort set det samme bare hvor jeg tæller med hvis vi accepterer hypotesen hvor jeg simulerer ud fra alternativ hypotesen
+
+```{r}
+N <- 10^4
+antal <- numeric(N) 
+for (i in 1:N) {
+x <-  rbeta(100, 2.5, 2)
+antal[i] <- mean(x)# compute mean, store in my.boot 
+}
+sum(antal>C)/N
+```
+
+
+
+
+
+
+

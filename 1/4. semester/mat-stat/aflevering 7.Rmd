@@ -1,0 +1,109 @@
+---
+title: "aflevering 7"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-04-01"
+---
+```{r}
+firmaer<-read.csv("/Users/asgeraircool/rdata/Firmaer.csv")
+head(firmaer)
+unique(firmaer$sektor)
+```
+```{r}
+detail<-subset(firmaer,subset=sektor=="detail")
+energi<-subset(firmaer,subset=sektor=="energi")
+industri<-subset(firmaer,subset=sektor=="industri")
+```
+##1
+```{r}
+lmd<-lm(omsaet~vaerdi,data=detail)
+lme<-lm(omsaet~vaerdi,data=energi)
+lmi<-lm(omsaet~vaerdi,data=industri)
+
+plot(detail$vaerdi,detail$omsaet,col="red",xlim=c(5,10),ylim=c(5,10))
+abline(lmd,col="red")
+points(energi$vaerdi,energi$omsaet,col="blue")
+abline(lme,col="blue")
+points(industri$vaerdi,industri$omsaet,col="green")
+abline(lmi,col="green")
+```
+det ser rimeligt ud at antage en lineær sammenhæng for at tjekke efter tegne vi residualplot
+
+```{r}
+plot(lmd$residuals~detail$omsaet)
+abline(0,0)
+plot(lme$residuals~energi$omsaet)
+abline(0,0)
+plot(lmi$residuals~industri$omsaet)
+abline(0,0)
+```
+igen ser residualerne rimelige ud uden systematisk afvigelse 
+
+altså starter vi i modellen 
+$M_0: O_{i,k}\sim N(\alpha_i,\beta_i*V_{i,k}\,,\sigma_i^2)\quad for\,\,\, i\in \{detail,energi,industri\} \quad for \,\,k \in\{1,\dots,n_i\}$
+
+##2
+$H_0:\sigma_i^2 =\sigma_0^2\quad for \quad i \in\{detail,energi,industri\}$
+vi kører en bartletts test for at tæste hypotesen
+
+
+```{r}
+bartlett.test(list(lmd,lme,lmi))
+```
+p værdien er ikke kristisk så vi går videre med ens varians 
+##3
+vi opskriver de rigtige neære modeller og kører anova for at se om det er rimligt at reducere modellen
+$M_1:=O_{i,k}\sim N(\alpha_i,\beta_i*V_{i,k}\,,\sigma_0^2)\quad for\,\,\, i\in \{detail,energi,industri\} \quad for \,\,k \in\{1,\dots,n_i\}$
+
+$$M_2:O_{i,k}\sim N(\alpha_i,\beta*V_{i,k}\,,\sigma_0^2)\quad for\,\,\, i\in \{detail,energi,industri\} \quad for \,\,k \in\{1,\dots,n_i\}$$
+vi tester hypotesen om at fi kan reducere fra m1 til m2 med anova
+```{r}
+lmm1<-lm(omsaet~sektor*vaerdi,data=firmaer)
+lmm2<-lm(omsaet~sektor+vaerdi,data=firmaer)
+anova(lmm2,lmm1)
+```
+p værdien er ikke kritisk da kan det godt antages at hældningen er den samme
+##4
+vi kører summary på den lineære model
+
+```{r}
+summary(lmm2)
+```
+vi aflæser at p værdien for at $\beta=0$ som er meget kritisk altså kan vi ikke antage at hældningen er lig 0
+
+##5
+vi udregner konfidensintervallet
+```{r}
+df<-lmm2$df.residual
+s<-sigma(lmm2)
+upper<-sqrt((df*s^2)/qchisq(0.025,df))
+lover<-sqrt((df*s^2)/qchisq(1-0.025,df))
+lover
+upper
+
+```
+altså er 95% konfidensintervallet for $\sigma_0$ [0.4147375 ,0.6877669]
+
+
+
+
+##6
+
+vi aflæser fra confint
+```{r}
+confint(lmm2)
+```
+da har vi at 95% konfidensintervalet for $\beta$ er [0.5894214, 1.0404821]
+
+
+
+
+
+
+
+
+
+
+
+

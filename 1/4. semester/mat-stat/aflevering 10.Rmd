@@ -1,0 +1,50 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+#oms 1.18
+
+##1
+
+
+$X\sim\Gamma(\lambda,r) \newline f_X(x)=\lambda^r*\Gamma(r)^{-1}*x^{r-1}*exp(-\lambda*x)$
+
+$\Rightarrow L(\lambda,r)=\prod_{i=1}^nf_X(\lambda,r,x_i)=\lambda^{r*n}*\Gamma(r)^{-n}*\prod_{i=1}^nx_i^{r-1}*exp(-\lambda\sum_{i=1}^nx_i)$
+
+##2
+
+
+$l(\lambda,r)=r*n*log(\lambda)-n*\log(\Gamma(r))+(r-1)\sum_{i=1}^nlog(x_i)-\lambda*\sum_{i=1}^nx_i$
+$\dfrac{\partial l}{\partial \lambda}=\dfrac{r*n}{\lambda}-\sum_{i=1}^nx_i=0\newline\dfrac{\partial l}{\partial r}=n*\log(\lambda)-n*\dfrac{d}{dr}log(\Gamma(r))+\sum_{i=1}^nlog(x_i)=0$
+
+
+##3
+
+```{r}
+set.seed(1)
+x <- rgamma(1000,shape = 2, rate = 3)
+
+An<-mean(x)
+Bn<-mean(log(x))
+f<-function(x){
+  return (digamma(x)-log(x)-Bn+log(An))
+}
+
+r_hat<-uniroot(f,c(1,100))$root
+
+lambda_hat<-r_hat/An
+print("r estimat")
+r_hat
+print("lambda estimat")
+lambda_hat
+```
+
+
+
+
+
+
+
+
+

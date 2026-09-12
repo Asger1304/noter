@@ -1,0 +1,89 @@
+---
+title: "aflevering 2"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-02-19"
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+opgave 1
+
+```{r}
+Goegen<- read.csv("/Users/asgeraircool/rdata/Goegen.csv")
+
+
+formVip=subset(Goegen, subset = (Art =="Vipstjert" ))
+formEng=subset(Goegen, subset = (Art =="Engpibe" ))
+
+qqnorm(formVip$Form, main="Vip")
+qqline(formVip$Form)
+qqnorm(formEng$Form,main="Eng")
+qqline(formEng$Form)
+```
+
+vi ser på de to plots og ser at de begge snoersig pænt om en linie og er
+da normaltfordelte. "Vip" har et par outliers men disse tænker jeg ikke
+er signifikante ved så småt et datasæt
+
+```{r}
+boxplot(Goegen$Form~Goegen$Art)
+```
+
+vi kalder eng vip for observationsrække 1 og Eng for observationsrække 2
+vi ser at engelpiben måske har en masse der ligger lidt højere mens at
+størelsen af deres ikke kritiske intervaller ser meget ens ud
+
+opgave 2
+
+$$M_0:X_{i,j}\sim N(\mu_i,\sigma^2_i)\,\, iid.$$
+
+```{r}
+
+art <-c("Vipstjert","Engpibe")
+observationer<-c(length(formVip$Form),length(formEng$Form))
+gennemsnit <- c(mean(formVip$Form),mean(formEng$Form))
+spredning <- c(sd(formVip$Form),sd(formEng$Form))
+nedre<- c(mean(formVip$Form)+qt(0.025,length(formVip$Form)-1)*sd(formVip$Form)/sqrt(length(formVip$Form)),mean(formEng$Form)+qt(0.025,length(formEng$Form)-1)*sd(formEng$Form)/sqrt(length(formEng$Form)))
+ovre<-c(mean(formVip$Form)+qt(1-0.025,length(formVip$Form)-1)*sd(formVip$Form)/sqrt(length(formVip$Form)),mean(formEng$Form)+qt(1-0.025,length(formEng$Form)-1)*sd(formEng$Form)/sqrt(length(formEng$Form)))
+#jeg forsøgte at trække vektoren af confindesintervallet ud af test funktionenn men kunne ikke få de til 
+#at virke og stadig have dataen i en dataframe så jeg skrev udregningen ind manuelt...
+
+tabel<-data.frame(art,observationer,gennemsnit,spredning,nedre,ovre)
+tabel
+
+
+```
+
+opgave 3
+
+hypotese
+$$h_0:\sigma_0=\sigma_1=\sigma_2\Leftrightarrow \dfrac{\sigma_1}{\sigma_2}=1$$
+vi laver varianstesten
+
+```{r}
+var.test(formVip$Form,formEng$Form)
+```
+
+p værdien\>0.05 da forkastes hypotesen ikke
+
+opgave 4 $$M_1: X_{i,j}\sim N(\mu_j,\sigma_0) \,\, iid.$$ opstiller
+modellen under hypotese $$h_1: \mu_1=\mu_2$$ vi laver testen
+
+```{r}
+t.test(formVip$Form,formEng$Form,var.equal = TRUE)
+```
+
+vi ser at p værdien er mindre end 0.05 da forkastes hypotesen og altså
+$\mu_1\neq\mu_2$
+
+opgave 5 samme test giver os konfidensintervallet for forskellen
+
+-0.04913384 -0.01023949
+
+den egentlige forskel i opgaven er $$0.7222867-0.7519733=-0.0296866$$
+som jeg ikke vil mene er en særlig stor forskel men når man kigger på
+variansen og antallet af observationer kan vi stadig konkluderer at der
+er for stor forskel til at vi kan accepterer at de 2 har ens middelværi

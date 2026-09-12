@@ -1,0 +1,333 @@
+##1.57
+```{r}
+bear<-read.csv("/Users/asgeraircool/rdata/Bear - Copy.csv")
+head(bear)
+
+```
+```{r}
+bear$loghlen<-log(bear$headlen)
+bear$loghwid<-log(bear$headwid)
+bear$logn<-log(bear$neck)
+bear$logl<-log(bear$length)
+bear$logc<-log(bear$chest)
+bear$logw<-log(bear$weight)
+head(bear)
+L=list(bear$loghlen,bear$loghwid,bear$logn,bear$logl,bear$logc)
+plot(bear$logw~bear$loghlen)
+abline(lm(bear$logw~bear$loghlen))
+```
+
+$log(W_i)\sim N(\alpha+\beta_{HeadL}*log(HeadL_i)+\beta_{HeadW}*log(HeadW_i)+\beta_{Neck}*log(Neck_i)+\beta_{length}*log(length_i)+\beta_{Chest}*log(Chest_i),\sigma_o^2)$
+
+
+```{r}
+lm1<-lm(logw~loghlen+loghwid+logn+logl+logc,data=bear)
+summary(lm1)
+plot(lm1$residuals~bear$loghw)
+qqnorm(lm1$residuals)
+
+```
+super pæn linje med et par enkelte outliers så modellen godtages
+```{r}
+lm1<-lm(logw~loghlen+loghwid+logn+logl+logc,data=bear)
+summary(lm1)
+
+```
+```{r}
+#loghlen fjernes
+lm2<-lm(logw~loghwid+logn+logl+logc,data=bear)
+summary(lm2)
+```
+```{r}
+#loghlen fjernes
+lm3<-lm(logw~logn+logl+logc,data=bear)
+summary(lm3)
+```
+ikke flere variable kan droppes 
+```{r}
+#vi kører anova for at se om vi kan reducere til slutmodellen
+
+anova(lm1,lm3)
+```
+som har en fin p værdi
+
+```{r}
+# Residuals
+res <- resid(lm3)
+
+# Get model frame (contains response + predictors)
+mf <- model.frame(lm3)
+
+# Loop over explanatory variables
+par(mfrow = c(1, length(mf)-1))  # Adjust layout
+for (i in 2:ncol(mf)) {
+  plot(mf[[i]], res,
+       main = paste("Residuals vs", names(mf)[i]),
+       xlab = names(mf)[i], ylab = "Residuals")
+  abline(h = 0, col = "red", lty = 2)  # Null line
+}
+```
+```{r}
+qqnorm(lm3$residuals)
+```
+
+```{r}
+plot(lm3$fitted.values,bear$logw)
+abline(0,1)
+summary(lm3)
+```
+vi har en virkelig lav standard afvigelse samt pæne kontroltegninger 
+```{r}
+X_test<-data.frame(logl=log(45),logc=log(25),logn=log(13))
+
+predict(lm3,X_test,interval = "confidence")
+predict(lm3,X_test,interval = "prediction")
+X_test
+```
+```{r}
+confint(lm3)
+#assuming some kind of independence of these coificients 
+1.8746972+1.4686283+0.8238632
+0.2447807+0.6649025+1.0982375
+#3 is definately in the intervall we will accept 
+#even if they arent completely independent the mean 
+0.5343+1.0668+1.4865
+#is very close to 3 
+```
+
+##1.58
+
+```{r}
+fisk<-read.csv("/Users/asgeraircool/rdata/Tampere.csv",stringsAsFactors = TRUE)
+head(fisk)
+levels(fisk$Art)
+```
+```{r}
+fisk$logl1<-log(fisk$L1)
+fisk$logl2<-log(fisk$L2)
+fisk$logl3<-log(fisk$L3)
+fisk$logh<-log(fisk$Hoejde)
+fisk$logb<-log(fisk$Bredde)
+fisk$logv<-log(fisk$Vaegt)
+fisk$lbmi<-fisk$logv-3*fisk$logl3+log(1000)
+head(fisk)
+```
+
+```{r}
+?subset
+aborre<-subset(fisk,subset = Art=="Aborre")
+brasen<-subset(fisk,subset = Art=="Brasen")
+head(aborre)
+```
+```{r}
+t.test(aborre$lbmi,brasen$lbmi,var.equal = FALSE)
+```
+$$
+M_1: log(BMI_{i,j})\sim N(\mu_i,\sigma_i^2)\quad i\in \{Aborre,Brasen,Flire,Rimte,Rutilus\}\quad j\in\{1,2,\dots,n_i\}
+$$
+```{r}
+flire<-subset(fisk,subset = Art=="Flire")
+rimte<-subset(fisk,subset = Art=="Rimte")
+rutilus<-subset(fisk,subset = Art=="Rutilus")
+
+
+#vi danner de individuelle modeller og kører først en bartletts test og derefter anova
+lmab<-lm(lbmi~1,data=aborre)
+lmbr<-lm(lbmi~1,data=brasen)
+lmfl<-lm(lbmi~1,data=flire)
+lmri<-lm(lbmi~1,data=rimte)
+lmru<-lm(lbmi~1,data=rutilus)
+```
+$H_0: \sigma_i^2=\sigma_0^2 \quad \forall i\in \{Aborre,Brasen,Flire,Rimte,Rutilus\}$
+
+vi tester hypotesen med en bartletts test
+```{r}
+bartlett.test(list(lmab,lmbr,lmfl,lmri,lmru))
+```
+p værdi over 0.05 altså forkaster vi ikke hypotesen 
+```{r}
+#vi opstiller generel lineær model
+m1<-lm(lbmi~Art,data=fisk)
+m2<-lm(lbmi~1,data=fisk)
+anova(m2,m1)
+```
+modellen kan ikke reduceres da er arten signifikant for den gennesnitlige bmi i modellen 
+
+
+```{r}
+plot(aborre$logv~aborre$logl1)
+lm1<-lm(logv~logl1+logl2+logl3+logh+logb,data=aborre)
+```
+```{r}
+summary(lm1)
+#logl2 fjernes
+```
+```{r}
+lm2<-lm(logv~logl1+logl3+logh+logb,data=aborre)
+summary(lm2)
+```
+```{r}
+lm3<-lm(logv~logl3+logh+logb,data=aborre)
+summary(lm3)
+```
+vi lader ikke flere gå ud 
+```{r}
+anova(lm3,lm1)
+```
+høj p værdi da er modelreduktionen godtaget
+```{r}
+confint(lm3)
+```
+
+##1.59
+```{r}
+forward=function(T,x,med=c()){
+d=dim(T)[2]; n=length(x)
+ma=ls.diag(lsfit(T[,1],x))$std.dev
+res=rep(ma,d)
+if (length(med)==0){lookup=c(1:d)} else {lookup=c(1:d)[-med]}
+for (i in lookup){
+ med1=c(med,i)
+ res[i]=ls.diag(lsfit(T[,med1],x))$std.dev
+ }
+sny=min(res)
+medny=which.min(res)
+med1=c(med,medny)
+ud=lsfit(T[,med1],x)
+uddiag=ls.diag(ud)
+betahat=ud$coef
+sds=uddiag$std.err
+pval=2*pt(-abs(betahat/sds),n-1-length(med1))
+return(list(sny=sny,med=med1,pval=pval))
+}
+
+```
+
+
+
+
+
+```{r}
+dat=matrix(scan("/Users/asgeraircool/rdata/Lobster - Copy.txt"),89,496,byrow=TRUE)
+spek=dat[,-496]; amdm=dat[,496]
+```
+
+```{r}
+m1<-forward(spek,amdm)
+```
+```{r}
+m2<-forward(spek,amdm,c(186))
+```
+```{r}
+
+m3<-forward(spek,amdm,c(186,237))
+```
+
+```{r}
+m4<-forward(spek,amdm,c(186,237,4))
+m5<-forward(spek,amdm,c(186,237,4,290))
+m6<-forward(spek,amdm,c(186,237,4,290,194))
+m7<-forward(spek,amdm,c(186,237,4,290,194,21))
+m8<-forward(spek,amdm,c(186,237,4,290,194,21,396))
+m9<-forward(spek,amdm,m8$med)
+m10<-forward(spek,amdm,m9$med)
+m11<-forward(spek,amdm,m10$med)
+m12<-forward(spek,amdm,m11$med)
+m13<-forward(spek,amdm,m12$med)
+m14<-forward(spek,amdm,m13$med)
+m15<-forward(spek,amdm,m14$med)
+smj<-c(m1$sny,m2$sny,m3$sny,m4$sny,m5$sny,m6$sny,m7$sny,m8$sny,m9$sny,m10$sny,m11$sny,m12$sny,m13$sny,m14$sny,m15$sny)
+smj
+```
+```{r}
+cvForward=function(T,x,k){
+d=dim(T)[2]
+n=length(x)
+Mr=matrix(0,n,k)
+for (i in 1:n){
+ T0=T[-i,]
+ x0=x[-i]
+ res=rep(0,d)
+ for (j in 1:d){
+  res[j]=summary(lm(x0~T0[,j]))$sigma
+ }
+ med=which.min(res)
+ beta=lsfit(T0[,med],x0)$coef
+ Mr[i,1]=(x[i]-sum(beta*c(1,T[i,med])))^2
+ if (k>1){
+ for (j in 2:k){
+  res=rep(10,d)
+  for (r in c(1:d)[-med]){
+   med1=c(med,r)
+   res[r]=ls.diag(lsfit(T0[,med1],x0))$std.dev
+   }
+  med=c(med,which.min(res))
+  beta=lsfit(T0[,med],x0)$coef
+  Mr[i,j]=(x[i]-sum(beta*c(1,T[i,med])))^2  
+ }}
+}
+return(sqrt(apply(Mr,2,sum)/n))
+}
+
+```
+
+```{r}
+g<-cvForward(spek,amdm,15)
+```
+```{r}
+g
+```
+```{r}
+count<-1:15
+
+plot(count,smj)
+points(count,g,col="red")
+```
+
+```{r}
+pv<-c(2.462640e-10,3.887555e-02,1.871205e-07,6.653681e-08,2.370217e-03,4.184733e-03,1.007415e-03,5.452091e-03,7.891145e-04,6.956666e-03,2.956763e-02,3.282301e-02,5.571612e-02,8.929572e-02,1.233023e-01)
+plot(count,pv)
+```
+```{r}
+m15
+```
+
+```{r}
+pv<-c(2.462640e-10,3.887555e-02,1.871205e-07,6.653681e-08,2.370217e-03,4.184733e-03,1.007415e-03,5.452091e-03,7.891145e-04,6.956666e-03,2.956763e-02,3.282301e-02,5.571612e-02,8.929572e-02,1.233023e-01)
+length(pv)
+```
+vi vælger modellen med 7 variable da den har en af de laveste validation score samtidig med at den har få inkluderede variable, et andet forslag kunne være 9 da den har stort set lige så stor validation score
+
+```{r}
+m7
+lm7<-lm(amdm~spek[,186]+spek[,237]+spek[,4]+spek[,290]+spek[,194]+spek[,21]+spek[,396])
+lm7
+```
+
+```{r}
+qqnorm(lm7$residuals)
+plot(lm7$fitted.values,amdm)
+abline(0,1)
+abline(2*g[7],1)
+abline(-2*g[7],1)
+```
+ja vi har ikke nogle værdeier ude for 
+
+
+
+
+
+##1.63
+```{r}
+set.seed(0)
+n = 10
+t = 1:n
+x = rnorm(n) + t
+lm1<-lm(x~t)
+summary(lm1)
+t1=model.matrix(lm1)
+tt=t(t1)
+
+solve(tt%*%t1)%*%t(t1)%*%x
+```
+
