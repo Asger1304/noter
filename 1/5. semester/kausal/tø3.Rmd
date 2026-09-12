@@ -1,0 +1,113 @@
+---
+title: "kausal tø 4"
+output: html_document
+date: "2025-09-20"
+---
+
+
+```{r}
+library("wooldridge")
+```
+
+
+
+1. las vegas point spread
+
+```{r}
+dat<-pntsprd
+dat
+```
+
+i) if the spread is 0 vegas predicts that there is equal probability of each team winning thus 50-50 as stated, anything else would mean that 
+if beta!= 0.5 then there must be more information than the point spread to incorperate
+
+
+ii)
+```{r}
+model1<-lm(favwin~spread,data=dat)
+summary(model1)
+X <- model.matrix(model1)
+
+
+XtX <-t(X) %*% X
+sigmah<-solve(XtX)*summary(model1)$sigma^2
+sigmah
+```
+```{r}
+a
+sigmah
+t(a) %*%sigmah%*% a
+```
+
+```{r}
+a <- c(1,0)
+(t(a)%*%model1$coefficients-0.5)/sqrt(t(a) %*%sigmah%*%a)
+```
+p value is to extreme
+
+
+
+iii) yes very about 77%
+
+iiii)
+```{r}
+model<-glm(favwin~spread,data=dat,family = binomial(link = "probit"))
+summary(model)
+```
+not significant
+intercept might be 0
+
+
+```{r}
+new_datapoint <-data.frame(spread = c(0,5,10))
+pnorm(predict(model,newdata = new_datapoint))
+```
+
+
+```{r}
+model2<-glm(favwin~spread,data=dat,family = binomial(link = "logit"))
+summary(model2)
+x<-predict(model2,newdata = new_datapoint)
+exp(x)/(1+exp(x))
+```
+
+
+4.
+
+
+```{r}
+dat<-na.omit(nyse)
+dat
+```
+
+i)
+```{r}
+base_model <-lm(return~return_1,data = dat)
+summary(base_model)
+```
+return_1 is insignificant
+
+```{r}
+dat$return_1sq<-dat$return_1^2
+sq_model<-lm(return~return_1+return_1sq,data=dat)
+summary(sq_model)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

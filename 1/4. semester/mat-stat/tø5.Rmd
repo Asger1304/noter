@@ -1,0 +1,94 @@
+---
+title: "tø uge 5"
+output: html_document
+date: "2025-03-03"
+---
+oms opgave 1.37
+
+```{r}
+moore<-read.csv("/Users/asgeraircool/rdata/Moore.csv")
+aar<-moore$Aar
+antal<-moore$Transistorer
+log2antal<-log2(antal)
+plot(log2antal~aar)
+```
+jeg vil sige det er en rimelig pæn linje uden systematisk afvigelse
+
+```{r}
+lmfit <-lm(log2antal~aar)
+sumfit<-summary(lmfit)
+
+plot(lmfit$residuals~aar)
+?abline
+abline(h=2*sumfit$sigma)
+abline(h=-2*sumfit$sigma)
+sumfit
+```
+```{r}
+sumfit$coefficients
+mean(aar)*0.50673-0.68295
+mean(log2antal)
+confint(lmfit)
+
+0.5067275+0.01052186*qt(0.975,df=length(aar)-2)
+0.5067275-0.01052186*qt(0.975,df=length(aar)-2)
+
+-0.6829498+0.55068876*qt(0.975,df=length(aar)-2)
+-0.6829498-0.55068876*qt(0.975,df=length(aar)-2)
+```
+
+ja det holder
+
+oms opgave 1.38
+```{r}
+testtid<-read.csv("/Users/asgeraircool/rdata/Testtid.csv")
+logkode<-log(testtid$KodningsTid)
+logtest<-log(testtid$TestTid)
+plot(logtest~logkode)
+lmfit<-lm(logtest~logkode)
+sumfit<-summary(lmfit)
+sumfit
+```
+linearitet i logrespons og logforklarende implicerer et polynomie
+
+i summary er testen allerede lavet med p værdi <2e-16 som er mindre end 0.05 da forkastes hypotesen
+```{r}
+confint(lmfit,level=0.95)
+nydata<-data.frame(logkode=6)
+predict(lmfit,nydata,interval = "confidence")
+predict(lmfit,nydata,interval = "prediction")
+```
+vi ser at hældningen er omkring de 2/3 hvilket nok betyder at 
+
+størelsesforskellen i intervallerne kommer fra variansen der kommer fra en ny variable fra fordelingen
+
+```{r}
+
+linje<-data.frame(logkode=c(0:1000)*0.07)
+pred<-as.data.frame(predict(lmfit,linje,interval = "prediction"))
+konf<-as.data.frame(predict(lmfit,linje,interval = "confidence"))
+
+
+plot(logkode,logtest)
+lines(linje$logkode,pred$fit)
+lines(linje$logkode,pred$lwr, col="green")
+lines(linje$logkode,pred$upr,col="green")
+lines(linje$logkode,konf$lwr,col="blue")
+lines(linje$logkode,konf$upr,col="blue")
+pred
+
+
+
+
+
+```
+
+
+oms opgave 1.42
+
+
+oms opgave 1.43
+
+
+
+oms opgave 1.46

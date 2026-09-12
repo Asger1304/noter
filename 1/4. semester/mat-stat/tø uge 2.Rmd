@@ -1,0 +1,209 @@
+---
+title: "tø uge 2"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-01-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(resampledata3)
+```
+
+
+Compute the mean x and median m of the eight numbers $1, 2, 4, 5, 6, 8, 11$
+15. Let $$f (x) = \sqrt{x}$$.\newline
+
+Apply this transformation to the data, and then com- pute the mean $x̃$ and the median $m̃$ of the transformed data
+
+question a: 
+$$\text{ Is}\,\, f (x) = x̃?$$\newline
+question b: 
+$$\text{Is}  f ( m ) = m̃?$$
+
+```{r}
+#we write up the data 
+x=c(1,2,4,5,6,8,11)
+#calculate the transformed data
+fx=sqrt(x)
+# find the mean for the data
+xb=mean(x)
+#then the mean of the transformation 
+mean(fx)
+#then f of the mean 
+sqrt(xb)
+#now we do the exactly the same but for the median 
+m=median(x)
+median(fx)
+sqrt(m)
+```
+
+the mean is not equal since f is concave then  
+$$f(\dfrac{1}{n}*\sum_{i=1}^nx_i)\leq \dfrac{1}{n} \sum_{i=1}^nf(x_i)$$ 
+the median in this case is equal but this is only true in general when f in linear or n is uneven and f is montone
+
+
+
+
+Let x and m denote the mean and median, respectively, of $$x_1 < x_2 < · · · < x_n$$ 
+Let f be a real-valued function.
+
+a) Is f(x) the mean off $$f(x_1),f(x_2),...,f(x_n)$$?
+no simply look at the last exercise 
+
+
+b) Is f(m) the median off f(x1),f(x2),...,f(xn)?
+try $x=(x_1,x_2)=(1,2)$
+$f=x^2$
+not equal
+c) Are there any conditions that would ensure that f (x) is the mean of
+the transformed data?
+liniarity of f or no variance in x
+
+
+d) Are there any conditions that would ensure that f (m) is the median
+of the transformed data?
+
+liniarity of f or no variance in x 
+or f order preserving and n uneven
+
+
+```{r}
+s=table(FlightDelays$DepartTime)
+barplot(s)
+```
+
+```{r}
+tab <- table(FlightDelays$Day,FlightDelays$Delayed30)
+prop.table(tab,1)
+```
+
+```{r}
+boxplot(FlightDelays$FlightLength~FlightDelays$Delayed30)
+
+```
+
+
+opgave 2.4,d
+vi ser at hvis flyet er forsiket er der en støøre chance for at det er en medium længde flyvetur men også mange flere outliers, jeg ville kke drage nogle konklutioner
+
+
+```{r}
+par(mfrow=c(1,2))
+tab <- table(Recidivism$Recid)
+barplot(tab)
+prop.table(tab)
+tab2 <-table(Recidivism$Age25,Recidivism$Recid)
+prop.table(tab2,1)
+```
+
+
+wee seee that about 30,6% of offenders over 25 go back to prison while about 36.5% of under 25 offenders go back 
+
+
+
+```{r}
+t=Recidivism$Days
+s=Recidivism$Type
+boxplot(t~s)
+
+```
+
+
+the median reeviction time is lover for tech crimes . all quantiles are lover for the tech crime type
+
+```{r}
+quantile(Recidivism$Days,na.rm=TRUE)
+```
+
+```{r}
+
+par(mfrow=c(1,2))
+over25 <-subset(Recidivism, Age25== "Over 25")
+under25 <- subset(Recidivism,Age25== "Under 25")
+
+plot.ecdf(over25$Days)
+plot.ecdf(under25$Days)
+```
+
+opgave 1.26
+
+```{r}
+curve(log(x),0,2,10000)
+abline(h=0)
+abline(v=1)
+
+```
+
+```{r}
+curve(x*sin(x^2),0,2*pi,1000)
+curve(x*cos(x^2),0,2*pi,1000,add = TRUE)
+
+```
+
+opgave 1.27
+
+```{r}
+data <-TXBirths2004
+hist(TXBirths2004$Weight, freq= FALSE, breaks=250*0:20)
+
+
+curve(dnorm(x,mean=mean(TXBirths2004$Weight),sd=sd(TXBirths2004$Weight)),0,5000, add=TRUE)
+```
+
+```{r}
+hist(TXBirths2004$Weight, freq= FALSE, breaks=50*0:100)
+curve(dnorm(x,mean=mean(TXBirths2004$Weight),sd=sd(TXBirths2004$Weight)),0,5000, add=TRUE)
+```
+
+
+histogrammet bliver langt mindre overskueligt og mere flimret 
+og derved sværere at konkludere ud fra 
+}
+
+
+oms opgave 1.25
+part a)
+
+
+
+$$\hat{F}_n(x)=\dfrac{1}{n}*\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)$$
+
+
+
+vi noterer at:  $$\mathbb{1}_{]-\infty,x]}(X_i)=1\Leftrightarrow X_i\leq x$$ 
+og $$\mathbb{1}_{]-\infty,x]}(X_i)=0\Leftrightarrow X_i> x$$ 
+da er denne transformation bernulli med sandylingheds paramete
+$$\mathbb{P}(X_i \leq x)=F(x)$$
+ summen af i.i.d bernulli er binomial
+$$n*\hat{F}_n(x)=\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)$$  er da binomial
+
+del b)
+
+
+$$\mathbb{E}[\hat{F}_n(x)]=\dfrac{1}{n}*\mathbb{E}[n*\hat{F}_n(x)]=F(x)$$
+
+
+$$\mathbb{V}[\hat{F}_n(x)]=\dfrac{1}{n^2}*\mathbb{V}[n*\hat{F}_n(x)]=\dfrac{1}{n^2}*n*F(x)*[1-F(x)]$$
+
+$$=\dfrac{1}{n}*F(x)*(1-F(x))$$
+
+del c) vis
+
+$$\lim_{n\to \infty}\mathbb{P}(\lvert \hat{F}_n(x)-F(x)\lvert \geq \delta)=0 \quad \forall  \delta>0$$
+
+
+vi bemærker at  $$\hat{F}_n(x)=\dfrac{1}{n}*\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)$$
+er en stikprøvemiddelværdi for varablen vi allerede har beskrevet som bernulli
+da siger store tals lov
+$$ \overline X \to^{\mathbb{P}} \mu \quad for\,\, n\to\infty $$
+
+da  $$\hat{F}_n(x)$$  er en stkprøve middelværdi for bernulli må:
+ $$\hat{F}_n(x) \to^{\mathbb{P}}F(x)  \quad for\,\, n\to\infty $$
+
+
+
+
+
+

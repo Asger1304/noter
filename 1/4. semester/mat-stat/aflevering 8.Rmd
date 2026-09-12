@@ -1,0 +1,84 @@
+---
+title: "alfevering 8"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-04-06"
+---
+
+dataindlæsning
+```{r}
+oktan<-read.csv("/Users/asgeraircool/rdata/oktan.csv")
+head(oktan)
+```
+##a
+$$
+M_0: oktan_i\sim N(\alpha+\beta_{T1}*T1_i+\beta_{T2}*T2_i+\beta_{T3}*T3_i+\beta_{T4}*T4_i+\beta_{T5}*T5_i,\sigma^2_0)\quad for \quad i\in\{1,...,n_i\}
+$$
+
+##b
+
+vi kører backwards selection proceduren 
+```{r}
+m0<-lm(oktan~T1+T2+T3+T4+T5,data=oktan)
+summary(m0)
+```
+$\beta_{t3}=0$ har størst p værdi da går den ud som den første
+```{r}
+m1<-lm(oktan~T1+T2+T4+T5,data=oktan)
+summary(m1)
+```
+nu T4
+```{r}
+m2<-lm(oktan~T1+T2+T5,data=oktan)
+summary(m2)
+```
+nu T5
+```{r}
+m3<-lm(oktan~T1+T2,data=oktan)
+summary(m3)
+```
+hvorefter proceduren stopper og vi ender i model 3
+$$
+M_3: oktan_i\sim N(\alpha+\beta_{T1}*T1_i+\beta_{T2}*T2_i,\sigma^2_0)\quad for \quad i\in\{1,...,n_i\}
+$$
+
+##c
+
+vi tjekker om reductionen er rimelig med anova
+
+```{r}
+anova(m3,m0)
+```
+som har en P værdi over 0.05 da er reductionen rimelig
+
+##d
+```{r}
+qqnorm(m3$residuals)
+qqline(m3$residuals)
+```
+vi har en super fin snoen ad qq line da kan residualerne antages normalfordelte 
+vi plotter også residualerne mod de forskellige variable
+
+```{r}
+par(mfrow=c(1,2))
+plot(m3$residuals~oktan$T1)
+plot(m3$residuals~oktan$T2)
+plot(m3$residuals~oktan$T3)
+plot(m3$residuals~oktan$T4)
+plot(m3$residuals~oktan$T5)
+```
+vi ser også på de 5 residual plots at det ikke ligner at der er nogen systematisk afvigelse i residualerne
+
+##e
+vi aflæser blot fra et konfint kald
+
+```{r}
+confint(m3)
+```
+for de forskellige
+$\alpha$ [91.04452 , 94.66783]
+$\beta_{T1}$ [-102.67741 , -92.63447]
+$\beta_{T2}$ [39.13918 , 49.87338]
+
+

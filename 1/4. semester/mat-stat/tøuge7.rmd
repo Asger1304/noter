@@ -1,0 +1,105 @@
+
+
+
+```{r}
+bananfluer<-read.csv("/Users/asgeraircool/rdata/Bananfluer.csv")
+
+qqnorm(bananfluer$Tid)
+qqnorm(log(bananfluer$Tid))
+#log passer bedre så den kører vi med
+
+logtid=log(bananfluer$Tid)
+```
+```{r}
+?interaction.plot
+#bananfluer$
+#bananfluer$Land
+#bananfluer$Behandling
+interaction.plot(x.factor = bananfluer$Behandling,trace.factor=bananfluer$Land,response = logtid)
+
+```
+
+
+
+
+```{r}
+factor_land<-as.factor(bananfluer$Land)
+factor_behandling<-as.factor(bananfluer$Behandling)
+bartlett.test(logtid~factor_land,data=bananfluer)
+bartlett.test(logtid~factor_behandling)
+factor_behandling
+```
+
+begge p værdier 
+
+```{r}
+#fitter med vekselvirkning
+lmfit1<-lm(logtid~factor_land+factor_behandling+factor_land:factor_behandling)
+#fitter lm
+lmfit2<-lm(logtid~factor_land+factor_behandling)
+#kører anova
+anova(lmfit2,lmfit1)
+#summary(lmfit2)
+```
+
+p værdi ikke lille da reduceres modellen til additiv model
+
+
+```{r}
+#vi ser om modellen kan reduceres til en hvor den ene factor er ligegyldig
+lmfit31=lm(logtid~factor_land)
+lmfit32=lm(logtid~factor_behandling)
+
+anova(lmfit31,lmfit2)
+anova(lmfit32,lmfit2)
+```
+begge er kritiske da kan vi ikke reducere modellen
+```{r}
+summary(lmfit2)
+
+confint(lmfit2)
+```
+[-0.52,0,121]
+
+
+
+eksamensopgave
+
+```{r}
+bakte<-read.csv("/Users/asgeraircool/rdata/bakteriehaemmer.csv",stringsAsFactors = TRUE)
+head(bakte)
+levels(bakte$Haemmer)
+levels(bakte$Bakterietype)
+
+bartlett.test(bakte$radius,bakte$Bakterietype:bakte$Haemmer)
+
+
+```
+
+
+```{r}
+lmfit1<-lm(radius~Bakterietype+Haemmer+Bakterietype:Haemmer,data=bakte)
+summary(lmfit1)
+lmfit2<-lm(radius~Bakterietype+Haemmer,data=bakte)
+
+anova(lmfit2,lmfit1)
+confint(lmfit2)
+```
+
+
+
+```{r}
+lmfit3a<-lm(radius~Bakterietype,data=bakte)
+lmfit3b<-lm(radius~Haemmer,data=bakte)
+
+anova(lmfit3a,lmfit2)
+anova(lmfit3b,lmfit2)
+```
+kan ikke reduceres ydderligere
+
+
+
+
+
+
+

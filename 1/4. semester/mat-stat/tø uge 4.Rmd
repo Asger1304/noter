@@ -1,0 +1,235 @@
+---
+title: "tø uge 4"
+output: html_document
+date: "2025-02-15"
+---
+
+## Opgave 1.4
+
+regn $[Q_1-1.5IQR, Q_3+1.5IQR]$
+
+```{r}
+
+q1=qnorm(0.25)
+q3=qnorm(0.75)
+iqr=2*q3
+
+l=q1-3/2*iqr
+u=q3+3/2*iqr
+l
+u
+```
+
+```{r}
+#sandsynligheden for et kritisk udfald
+p=(pnorm(u)-pnorm(l))
+1-p
+```
+
+
+```{r}
+#jeg tænker vi ser det som om vi tager N værdier ud fra stikprøven og skal finde ud af hvor mange af dem er outliers
+# N_outliers er binomail fordelt da hver enkelt prøve enten kan være kritisk eller ikke kritisk da bernulli med sansynlighed p fra oven over
+# summen af bernulli er binomial da er 
+```
+
+
+det er lidt svært at finde ud af hvad man skal svare på men jeg kan da prøve at give det et skud
+for en anden normal fordeling rykker vi vel bare massen og flader den muligvis ud men strukturen burde være den samme
+for enhver uniform fordeling tænker jeg at der ikke kan være nogle kritiske udfald da massen er helt flad og 1, og 3, kvartil hver vil lække på 1/4 og 3/4 af intervallets længde da bliver intervallet for boxplottet større end det egentlige interval
+for eksponentielfordelingen kan vi nemt se at alle kritiske udfald mp lægge til højre ved at kigge på kvartilfunktionen fundet i tidliger opgavere
+
+
+```{r}
+stikprove <- c(0,2, 15:21, 25, 30)
+boxplot(stikprove)
+boxplot.stats(stikprove)
+boxplot.stats(stikprove)$out
+length(boxplot.stats(stikprove)$out)
+```
+
+```{r}
+replicate(5, 3) # danner en vektor med 5 indgange af 3
+replicate(5, mean(rnorm(4))) # danner en vektor med 5 ingange af gennemsnittet af 4 tikprøver af en standard normalfordeling
+```
+
+
+
+```{r}
+replicate(100, length(boxplot.stats(rnorm(10))$out))  # danner en vektor af længde 100 som tæller antaller af outilers ved 10 stikprøver fra standard normalfordelingen
+mean(replicate(100, length(boxplot.stats(rnorm(10))$out))) #tager gennemsnittet af udtrykket over
+```
+
+
+```{r}
+n=10000
+mean(replicate(100, length(boxplot.stats(rnorm(n))$out)))
+```
+
+rammer rimeligt spot on
+
+
+```{r}
+n=10000
+mean(replicate(100, length(boxplot.stats(runif(n))$out)))
+```
+```{r}
+n=10000
+mean(replicate(100, length(boxplot.stats(rexp(n))$out)))
+```
+
+## opgave 1.28##
+
+```{r}
+getwd()
+data <- scan("rdata/Alluvialkegle.txt")
+
+```
+```{r}
+hist(data)
+qqnorm(data)
+qqline(data)
+
+logdata=log(data)
+
+qqnorm(logdata)
+qqline(logdata)
+```
+
+
+vi ser at log data snoer sig pænt om qqline hvor at vi ved det normale qqplot har for stor systematisk afvigelse i "halerne"
+
+vi har nu sagt at log data er normaltfordelt og vi skal nu lave statistisk test om hypotesen 
+$$m_1: log(X_i) \,\,is\, \, Normal  $$
+$$h_0: \mu=1\leftrightarrow log(\mu)=0$$
+```{r}
+t.test(logdata,mu=0)
+
+```
+
+```{r}
+#confindence interval for varians og spredning
+f=length(logdata)-1
+l=f*var(logdata)/qchisq(0.975,df=f)
+u=f*var(logdata)/qchisq(1-0.975,df=f)
+print("varians")
+l
+u
+print("sd")
+sqrt(l)
+sqrt(u)
+```
+
+
+## opgave 1.31##
+
+```{r}
+dat <- read.csv("rdata/Chatbot.csv")
+tekst <- subset(dat,subset= Chatbot=="Text")
+tale <- subset(dat,subset= Chatbot=="Avatar")
+
+```
+
+```{r}
+qqnorm(tekst$Puls,main="tekst")
+qqline(tekst$Puls)
+qqnorm(tale$Puls,main="tale")
+qqline(tale$Puls)
+?qqnorm
+```
+begge passer fint med normalfordeling tale har et par enkelte outliers til højre men det er ikke nok til at sige den ikke er normaltfordelt 
+
+```{r}
+boxplot(dat$Puls~dat$Chatbot)
+```
+vi ser at både medianen og grænserne for outliers er noget højere for "avatar" end for tekst dette kunne tyde på at de ikke kommer til at have samme fordeling 
+
+```{r}
+#for tekst
+
+#antal obserationer
+length(tekst$Puls)
+#gennemsnit
+mean(tekst$Puls)
+#sd
+sd(tekst$Puls)
+#konfidensinterval som også giver lidt mere information
+t.test(tekst$Puls)
+```
+
+
+```{r}
+#for avatar
+
+#antal obserationer
+length(tale$Puls)
+#gennemsnit
+mean(tale$Puls)
+#sd
+sd(tale$Puls)
+#konfidensinterval som også giver lidt mere information
+t.test(tale$Puls)
+```
+
+
+```{r}
+#varians test 
+
+var.test(tekst$Puls,tale$Puls,1)
+
+
+```
+
+
+hypotesen om ratioen mellem varianserne lig 1 ligger uden for vores 95% sikkerheds interval da forkasten hypotesen og varianserne ses som forskellige fra nu af 
+
+
+
+```{r}
+t.test(tekst$Puls,tale$Puls,var.equal = FALSE)
+```
+igen p værdi lavere end 0.05 så hypotesen forkastes da forskellen mellem middelværdierner er for stor
+med andre ord 0 er ikke i konfidensintervallet da forkastes hypotesen
+
+
+
+```{r}
+logtek=log(tekst$Puls)
+logtal=log(tale$Puls)
+
+
+qqnorm(logtek)
+qqline(logtek)
+
+qqnorm(logtal)
+qqline(logtal)
+```
+der er en op og ned omkring linien men det ser pænt nok ud til at vi kan sige de er normalt fordelt
+
+```{r}
+var.test(logtek,logtal)
+```
+i denne model er p værdien høj nok til at hypotesen ikke forkastes og vi går derfor videre og siger de har ens varians
+```{r}
+t.test(logtek,logtal,var.equal = TRUE)
+```
+
+```{r}
+#vi tjekker hvor meget større log  middelværdien er 
+dif=mean(logtek)-mean(logtal)
+exp(-dif)
+```
+
+avataren giver en ca 20% højere puls i gennesnit
+
+
+
+
+
+
+
+
+
+
+
+

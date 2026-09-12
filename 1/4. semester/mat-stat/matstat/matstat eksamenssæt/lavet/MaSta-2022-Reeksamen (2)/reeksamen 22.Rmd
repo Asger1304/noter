@@ -1,0 +1,208 @@
+---
+title: "reeksamen 22"
+date: "2025-05-30"
+output: pdf_document
+---
+
+# opgave 1
+
+## 1.1
+vi sætter det teoretiske 1. moment lig gennemsnittet og isolerer $\beta$
+$$\mathbb{E}[X_i]=\mathbb{E}[Y*Z]=\mathbb{E}[Y]\mathbb{E}[Z]
+$$
+da de 2 stokastiske variable er uafhængige
+de de er uniformt fordelte kender vi deres middelværdier
+$$\mathbb{E}[X_i]=\dfrac{1}{2}*\dfrac{\beta}{2}=\dfrac{\beta}{4}$$
+sætter lig gennemsnittet 
+$$\dfrac{\beta}{4}=\bar{X}.\Leftrightarrow\hat{\beta}_{mom}=\bar{X}.*4$$
+for det egentlige data
+```{r}
+x<-c(3.23,2.19,2.5,1.89,3.09)
+bh<-mean(x)*4
+bh
+```
+
+# opgave 2
+```{r}
+dat1<-read.csv("Behandling.csv",stringsAsFactors = T)
+head(dat1)
+```
+
+
+
+## 2.1
+```{r}
+boxplot(dat1$x~dat1$Behandling)
+```
+der er en enkelt outlier i gruppe A
+
+
+## 2.2
+vi laver en permutationstest for om de 2 grupper har fælles midelværdi
+```{r}
+obj<-dat1$x
+gruppe1<-subset(dat1,subset = Behandling=="A")$x
+gruppe2<-subset(dat1,subset = Behandling=="B")$x
+
+obs<-mean(gruppe1)-mean(gruppe2)
+
+N<-10^5
+result<-numeric(N)
+for (i in 1:N){
+  index<-sample(length(obj),size=length(gruppe1),replace = FALSE)
+  result[i]<-mean(obj[index])-mean(obj[-index])
+}
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+p_2sidet
+```
+vi har en p værdi på over 0.6 da er der som sådan ingen grund til at tvivle på hypotesen om fælles middelværdi
+
+## 2.3
+jeg retter fejlen ved at danne en ny kollone hvor jeg tager den absolutte værdi af rækken da fejlen er den eneste negative
+```{r}
+dat1$xny<-abs(dat1$x)
+```
+jeg gentager lidt kode fra før og laver 2 qqplots for at tjekke om de ser normale ud
+```{r}
+Ax<-subset(dat1,subset = Behandling=="A")$xny
+Bx<-subset(dat1,subset = Behandling=="B")$xny
+par(mfrow=c(1,2))
+qqnorm(Ax)
+qqline(Ax)
+qqnorm(Bx)
+qqline(Bx)
+```
+vi ser at qqplotsne snor sig fint om linjen
+ved så små dataset forventer man heller ikke et snor lige plot, det strider derfor ikke imod data at antage at data er normalfordelt og vi lader os derfor reducere til M_1
+
+# 2.4
+vi laver en F -test via r's var.test på de 2 rækker
+```{r}
+var.test(Ax,Bx)
+```
+giver os en p værdi på 0.23>0.05 da er det rimeligt at reducere til modellen M_2
+$$M_2:X_{i,j}\sim N(\mu_j,\sigma^2)\quad i=A,B\quad j=1,...,n_i$$
+med $n_A=8$,$n_B=10$
+for at teste hypotesen om fælles middelværdi laver vi et T test med fælles varians
+```{r}
+t.test(Ax,Bx,var.equal = T)
+```
+denne har en p værdi på 0.025<0.05 da forkastes hypotesen om fælles middelværdi i model 2 
+
+for en god ordens skyld tjekker jeg også lige om det kunne antages under forskellig varians
+```{r}
+t.test(Ax,Bx,var.equal = F)
+```
+hvor hypotesen igen forkastes 
+# opgave 3
+
+## 3.1
+generelt for et qqplot af noget som nogenlunde normaltfordelt vil sno sig på n linje når man laver et qqnorm plot 
+dette plot vil have hældning sd og skæring $\mu$ ned stikprøve størrelse på 100 er skønnene nok temmeligt gode og jeg tænker at det er rimeligt at sige at vi burde have en hældning som er lig kvadratroden af vores variansskæn og en skærreing omkring vores middelværdiskøn 
+
+1. tegning
+skærer omkring 60
+
+hældning på øjemål regnet til varians:
+```{r}
+((65-56)/4)^2
+```
+
+2. tegning
+skærer omkring 60
+
+hældning på øjemål regnet til varians:
+```{r}
+((68-52)/4)^2
+```
+
+tegning 2 er off med langt mere end tegning 1 på heldningen
+jeg vil sige at tegning 1 passer bedst 
+
+
+## 3.2
+siden at qqplottet ser super fint ud antager jeg at data er normalfordelt 
+vi skal have fat i et konfidensinterval for middelværdien under ukendt varians vi slår det op og regner det ud
+```{r}
+s2<-6.748
+n<-100
+xb<-60.42
+alp<-0.05
+c(nedre=xb-sqrt(s2/n)*qt(1-alp/2,df=n-1),oevre=xb+sqrt(s2/n)*qt(1-alp/2,df=n-1))
+```
+
+
+## 3.3
+igen under antagelse om normalitet kan vi bare slå konfidensintervallet op
+for variansen har vi 
+```{r}
+nedre<-(n-1)*s2/qchisq(1-alp/2,df=n-1)
+oevre<-(n-1)*s2/qchisq(alp/2,df=n-1)
+```
+
+vi tager kvadratrødderne og får
+```{r}
+c(nedre=sqrt(nedre),oevre=sqrt(oevre))
+```
+3 er i konfidensintervallet dog lige på kanten det er derfor ikke imod data at antage at spredningen er lig 3
+
+# opgave 4
+```{r}
+dat2<-read.csv("nedbrydning.csv")
+dat2$logCFU<-log(dat2$CFU)
+head(dat2)
+```
+
+## 4.1
+som kontroltegning plotterjeg data hvorefter jeg fitter modellen og plotter residualerne
+```{r}
+plot(logCFU~Tid,data=dat2)
+```
+det ser ud til at det føljer en pæn lije linje nedad så en lineære regression er nok ikke et dårligt bud
+```{r}
+m1<-lm(logCFU~Tid,data=dat2)
+```
+for at tjekke residualerne skal vi lave de studentiserede residualer
+```{r}
+h=1/length(dat2$Tid)+(dat2$Tid-mean(dat2$Tid))^2/sum((dat2$Tid-mean(dat2$Tid))^2)
+studres<-m1$residuals/sqrt(1-h)
+qqnorm(studres)
+qqline(studres)
+```
+vi ser at den snor sig fint med et par outliers som er at forvente med så småt et dataset
+vi plotter også residualerne som funktion af den forklarende variable for en sikkerheds skyld
+```{r}
+plot(m1$residuals~dat2$Tid)
+```
+det kunne godt se ud til at længere tid føre til lavere varians men igen med så småt et dataset er det svært at sige
+
+jeg skriver modellen op:
+$$M_1:log(X_i)\sim N(\alpha+\beta*t_i,\sigma^2)\quad i=1,...,12$$
+
+## 4.2
+jeg læser konfidensintervallet direkte ud af R 
+```{r}
+confint(m1)
+```
+95% konfidensintervallet for $\beta$ :[-0.07032147 , -0.05383889]
+
+## 4.3
+ud fra konfidensintervallet for $\beta$ bygger vi et for halveringstiden da denne bare er en transformation af $\beta$ her er l den nedre og h den øvre grænse for konfidensintervallet for $\beta$
+$$l\leq \beta\leq h\Leftrightarrow h^{-1}\leq\beta^{-1}\leq l^{-1}\Leftrightarrow \dfrac{-1}{l}\leq \dfrac{-1}{\beta} \leq \dfrac{-1}{h}$$
+$$\Leftrightarrow \dfrac{-log(2)}{l}\leq \dfrac{-log(2)}{\beta} \leq \dfrac{-log(2)}{h}$$
+da regner vi konfidensintervallet
+```{r}
+l<- -0.07032147
+h<- -0.05383889
+c(nedre=-log(2)/l,oevre=-log(2)/h)
+```
+
+
+
+
+
+
+

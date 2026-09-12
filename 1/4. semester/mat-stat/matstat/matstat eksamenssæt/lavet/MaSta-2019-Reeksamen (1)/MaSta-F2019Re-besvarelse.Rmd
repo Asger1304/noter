@@ -1,0 +1,77 @@
+---
+title: "Reeksamen i Matematisk Statistik, F 2019"
+author: "Angiv dit navn og studienummer her"
+date: "23.8.2019"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+documentclass: article
+classoption: a4paper
+---
+
+
+## Opgave 1 
+
+### (1.a) 
+
+
+### (1.b) 
+
+
+
+
+************
+
+## Opgave 2 
+
+### (2.a) 
+
+
+### (2.b) 
+
+
+
+************
+
+## Opgave 3 
+
+### (3.a) 
+
+<!-- vink: 
+Hvis knit tager meget tid efter du har tilføjet besvarelsen af denne opgave, kan det skyldes, at permutationstestet køres hver gang. Det kan undgås ved at bruge optionen cache=TRUE i din R-chunk, altså:
+```{r, cache=TRUE}
+# her er din kode. Husk også at bruge set.seed ved simulationer, fx
+set.seed(42)
+```
+-->
+
+************
+
+## Opgave 4 
+
+<!-- vink:
+Her er LaTeX koden til de to modelformler:
+$$
+\begin{aligned}
+\tilde{M}_1 : & Y_{gj} \sim N(\tilde{\alpha}_g + \tilde{\gamma}_g x_{gj}, \tilde{\sigma}^2)\\
+{M}_1 : & \log(Y_{gj}) \sim N(\alpha_g + \gamma_g \log(x_{gj}), \sigma^2)
+\end{aligned}
+$$
+-->
+
+
+### (4.a) 
+
+
+### (4.b) 
+
+
+### (4.c) 
+
+
+### (4.d) 
+
+
+### (4.e) 
+

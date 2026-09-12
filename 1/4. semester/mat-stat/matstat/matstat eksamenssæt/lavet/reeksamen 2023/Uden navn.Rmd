@@ -1,0 +1,231 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+mat-stat re-eksamen 2023
+
+#1
+
+##1.1
+jeg indlæser data
+```{r}
+dat1<-read.csv("amitrip.csv")
+```
+
+```{r}
+head(dat1)
+```
+$M_0: X_i\sim N(\alpha+\sum_{j=1}^4\beta_j*t_{j,i},\sigma^2) \quad for \quad i\in\{1,...,17\}$
+```{r}
+lm1<-lm(x~t1+t2+t3+t4,data=dat1)
+```
+
+```{r}
+qqnorm(lm1$residuals)
+qqline(lm1$residuals)
+```
+residualerne ser rimelige ud 
+```{r}
+par(mfrow=c(1,2))
+plot(lm1$residuals~dat1$t1)
+plot(lm1$residuals~dat1$t2)
+plot(lm1$residuals~dat1$t3)
+plot(lm1$residuals~dat1$t4)
+plot(lm1$residuals~lm1$fitted.values)
+```
+og der virker ikke til at være en systematik i afvigelserne når man ser dem som funktion af t'erne
+
+##1.2
+
+
+```{r}
+summary((lm1))
+```
+p værdien for hypotesen om at t2's koifficient er 0 er størst da lader vi den gå ud 
+
+```{r}
+lm2<-lm(x~t1+t3+t4,data=dat1)
+summary(lm2)
+```
+her har vi at den største p værdi er ved t4 da lader vi den gå ud 
+```{r}
+lm3<-lm(x~t1+t3,data=dat1)
+summary(lm3)
+```
+her ser vi at ingen p værdier for "irrelevans" er større end niveauet specificeret til 0.05 da stopper backwards selection metoden
+
+vi tjekker modelreduction mode anova
+
+```{r}
+anova(lm3,lm1)
+```
+p værdien for f-testet er 0.45>0.05 da lader vi modellen reducere og går videre med
+
+##1.3
+vi kalder fra vores modelfit
+
+```{r}
+lm3$coefficients
+confint(lm3)
+```
+skæring: $\hat{\alpha}=870.52$ med 95% konfidensinterval [498.18056528 , 1242.8614392]
+koifficienter:
+$\beta_1$: $\hat{\beta_1}=0.1366$ med 95% konfidensinterval [0.06796675,0.2052143]
+$\beta_3$: $\hat{\beta_3}=4.4542940$ med 95% konfidensinterval [0.64190725 ,8.2666808]
+
+
+##1.4
+
+vi kalder predict functionen 
+```{r}
+nytpunkt<-data.frame(t1=1100,t3=80)
+
+predict(lm3,nytpunkt,interval = "prediction")
+```
+
+dette giver os den fittede værdi + konfidensintervallet(som jeg har specificeret til prediction)
+##1.5
+vi kender fordelingen af 
+$s^2(X)=\dfrac{||X-P(X)||^2}{n-d}\sim \dfrac{\sigma ^2*\chi^2(n-d)}{n-d}$
+$\Leftrightarrow \dfrac{s^2(X)}{\sigma^2}*(n-d)\sim\chi^2(n-d)$
+da har vi(noter at jeg dropper frihedsgraden på chi^2 fraktilen men den stadig er der implicit )
+$P(\chi_{\dfrac{\alpha}{2}}^2\leq\dfrac{s^2(X)}{\sigma^2}*(n-d)\leq\chi_{1-\dfrac{\alpha}{2}}^2)=1-\alpha \newline\Leftrightarrow P(\dfrac{\chi_{\dfrac{\alpha}{2}}^2}{s^2(X)*(n-d)}\leq\dfrac{1}{\sigma^2}\leq\dfrac{\chi_{1-\dfrac{\alpha}{2}}^2}{s^2(X)*(n-d)})$
+
+altså kan vi regne intervallet ud 
+
+```{r}
+qchisq(0.025,df=lm3$df.residual)/sigma(lm3)^2/lm3$df.residual
+qchisq(1-0.025,df=lm3$df.residual)/sigma(lm3)^2/lm3$df.residual
+```
+```{r}
+s<-summary(lm3)$sigma
+(qchisq(0.025,df=14)/s^2/14)
+(qchisq(1-0.025,df=14)/(s^2*14))
+
+```
+altså har vi et konfidensinterval for præcisionen [1.780875e-05 ,8.263787e-05]
+hvilket virker utroligt lavt men når man kigger på vores standard error i vores fittede model er det måske ikke så værst
+
+#2
+
+##2.1
+
+$H_0: \pi_1=\pi_2=\pi_3=\pi_4=\dfrac{1}{4}$
+for at undersøge hypotesen bruger vi likelihood ratio testoren og i forlængelse G testoren her noterer vi at der ikke er nogle frie parametre under hypotesen så vi behøver ikke gå i gang med at finde MLE for parametre og k i formelerne senere er 0
+dette giver os simpelthen 
+```{r}
+A<-c(21,6,9,8)
+k<-0
+p=c(1/4,1/4,1/4,1/4)
+e<-p*sum(A)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(p)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+p værdien er 0.01<0.05 altså forkastes hypotesen om at forbrugerne er "lige Glade" for alle samgsvarianterne
+
+##2.2
+likelihood funktionen for en generel multinomial model med generelle parametre $\pi_i$ er
+$L(\pi_1,\pi_2,\pi_3,\pi_4)=\dfrac{n!}{a_1!a_2!a_3!a_4!}*\pi_1^{a_1}*\pi_2^{a_2}*\pi_3^{a_3}*\pi_4^{a_4}$
+lad $\pi_1=1-3p,\pi_2=\pi_3=\pi_4=p$
+da bliver L blot en funktion af p
+$L(p)=\dfrac{n!}{a_1!a_2!a_3!a_4!}*(1-3p)^{a_1}*p^{a_2}p^{a_3}p^{a_4}=\dfrac{n!}{a_1!a_2!a_3!a_4!}(1-3p)^{a_1}*p^{a_2+a_3+a_4}$
+her er $\dfrac{n!}{a_1!a_2!a_3!a_4!}$ blot en konstant som ikke afhænger af p som vi kan kalde C
+$\dfrac{n!}{a_1!a_2!a_3!a_4!}(1-3p)^{a_1}*p^{a_2+a_3+a_4}=C*(1-3p)^{a_1}*p^{a_2+a_3+a_4}$
+som ønsket vist
+
+##2.3
+vi begrner de forventede under hypotesen 
+$e_i=\pi_i(p)$
+vi smider blot mle estimatet ind i funktionerne for sandsynlighederne og regner de forventede under hypotesen 
+```{r}
+ph=(6+9+8)/132
+p=c((1-3*ph),ph,ph,ph)
+e=44*p
+e
+```
+
+
+
+##2.4
+vi kører G-test for at reducere modellen i den nye model er der en fri variable p da K=1
+```{r}
+A<-c(21,6,9,8)
+k<-1
+p=c((1-3*ph),ph,ph,ph)
+e<-p*sum(A)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(p)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+p værdien er temeligt høj så hypotesen om lige præferencer mellem de gamel smagsvarianter forkastes ikke
+
+
+
+##2.5
+$L(p)=C*(1-3p)^{a_1}*p^{a_2+a_3+a_4} \newline l(p)=log(C)+a_1*log(1-3p)+(a_2+a_3+a_4)*log(p) \newline \dfrac{\partial l}{\partial p}=\dfrac{-3*a_1}{1-3p}+\dfrac{a_2+a_3+a_4}{p}=0 \Leftrightarrow 3*a_1*p=(a_2+a_3+a_4)*(1-3p) \newline 3*a_1*p+3*p*(a_2+a_3+a_4)=a_2+a_3+a_4 \newline \Leftrightarrow \hat{p}=\dfrac{a_2+a_3+a_4}{3*n}=\dfrac{a_2+a_3+a_4}{132}$
+vi tjekker om det er et maksimum
+
+$\dfrac{\partial^2 l}{\partial p^2}=\dfrac{-9a_1}{(1-3p)^2}-\dfrac{a_2+a_3+a_4}{p^2}<0$
+den andenafledte er negativ da har vi et maksimum
+#3
+
+##3.a
+stikprøve D's 3. kvartil er over 4 det eneste boxlot hvor det er tilfældet er boxplot nummer 2
+atlså D hører sammen med 2
+
+##3.b
+for en uniformt fordelt variable er CDF'en lineær og derved må den empiriske også være nogen lunde lineær
+den stikprøve som kommer tættest på er stikprøve B så mit svar er B
+
+##3.c
+for boxplottet af en normal fordeling har vi at 
+
+
+#4
+
+##4.1
+```{r}
+dat2<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/reeksamen 2023/bilister.csv")
+```
+vi ønsker at lave en parret test for at eliminere variansen af at nogle mennesker har naturligt lavere eller højere reaktionsid
+
+```{r}
+head(dat2)
+```
+
+vi ønsker at teste hypotesen $H_0:\mu_{efter}-\mu_{foer}=0 \quad H_A:\mu_{efter}-\mu_{foer}>0$
+i matched pairs vil vi dog kun bytte rundt på indgage det er samme person
+under hypotesen vil vi kunne bytte rundt på dem lige så tosset vi har lyst så ideen er at vi prøver at gøre det en hel masse gange og ser hvor ekstrem den vi faktisk har observeret faktisk er(under denne hypotese kun i den store retninng)
+vi gør dette med en permutationstest 
+
+```{r}
+
+obs<-mean(dat2$efter)-mean(dat2$foer)
+
+d<-dat2$efter-dat2$foer
+n<-length(d)
+
+N<-10^5
+result<-numeric(N)
+for (i in 1:N){
+signs<-sample(c(1,-1),n,replace = TRUE)
+result[i] <- mean(signs*d)
+}
+
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+
+```
+
+
+```{r}
+hist(result,freq = F)
+abline(v=obs)
+p_stor
+```
+vi får at kun ca 2.5% af permutationerne giver os en værdi mindst lige så ekstrem da p værdien <0.05 forkaster vi hypotesen om at reaktionshastigheden for folk der har drukket en svaps er den samme som folk der ikke har 
+

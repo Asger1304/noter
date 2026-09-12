@@ -1,0 +1,115 @@
+---
+title: "kausal tø uge 1"
+output: html_document
+date: "2025-08-30"
+---
+```{r}
+library("wooldridge")
+```
+```{r}
+wage2
+```
+```{r}
+fammod<-lm(educ~sibs+meduc+feduc+lwage,data = wage2)
+summary(fammod)
+```
+
+
+
+
+
+```{r}
+1/0.09
+```
+```{r}
+4*(0.13+0.21)
+```
+
+
+
+2.
+i) no it dosent make sense as study+sleep+work+leisure = 24 hours to increase study we must decrease one of the other
+ii) we must have sleep = 24-work-study-leisure, X'X er ikke invertible og formlen virker derfor ikke
+
+iii)
+lav ny regression 
+$$GPA = \alpha_0+\alpha_1*work+\alpha_2*leisure+\alpha_3*study+\epsilon$$
+
+```{r}
+gpamodel<-lm()
+```
+
+
+
+
+
+3.
+
+```{r}
+dat <-discrim
+dat
+```
+
+i)
+
+```{r}
+dat <-dat[complete.cases(dat),]
+mean(dat$prpblck)
+sd(dat$prpblck)
+
+dat
+```
+
+its % of people in the zipcode who are black, and then probably the average income/person in the zipcode
+
+
+ii)
+```{r}
+mod<-lm(psoda~prpblck+income,data = dat)
+summary(mod)
+```
+the model fit implies that a 100% black population would have 15c higher soda prices vs 0% but we need to be carefull since here we are also adjusting in terms of income where (assuming black people may have lower average income) these effects might cancel each other out thus it is very hard to say
+
+
+
+
+iii)
+```{r}
+mod2 <-lm(psoda~prpblck,data = dat)
+summary(mod2)
+```
+here the effect becomes smaller this might be because a black person might have lower wage on average
+
+
+
+iv)
+
+```{r}
+mod3 <-lm(log(psoda)~prpblck+log(income),data = dat)
+summary(mod3)
+```
+
+v)
+```{r}
+mod4 <-lm(log(psoda)~prpblck+log(income)+prppov,data = dat)
+summary(mod4)
+```
+vi)
+
+vii)
+```{r}
+gpa2
+```
+
+
+```{r}
+dat<-gpa2
+dat$hsize2<-dat$hsize^2
+gpamodel <-lm(sat~hsize+hsize2+female+black+black*female+hsrank,data=dat)
+summary(gpamodel)
+```
+
+
+
+
+

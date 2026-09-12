@@ -1,0 +1,165 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+##givet funktion til flere qqplots
+
+```{r}
+qqnorm_multi <- function(y, groups, col = NULL, pch = NULL, 
+   main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles",
+                           ..., legend = TRUE, qqlines = TRUE){
+  # lidt fejlbehandling
+  if (missing(y)) stop ("no data given")
+  if (missing(groups)) stop ("no groups given")
+  if (length(y) != length(groups)) stop ("y and groups need to be vectors of same length")
+  
+  # lav en faktor variabel, hvis ikke groups allerede er det
+  groups = factor(groups)
+  # valg farver og symboler hvis de mangler
+  ngroups <- nlevels(groups)
+  if (is.null(col)) col <- 1 : ngroups
+  col <- rep(col, length.out = ngroups)
+  if (is.null(pch)) pch <- 1 : ngroups
+  pch <- rep(pch, length.out = ngroups)
+  # beregn værdier
+  allqq <- tapply(y, groups, qqnorm, plot.it = FALSE)
+  xrange <- range(sapply(allqq, function(res) range(res$x)))
+  yrange <- range(sapply(allqq, function(res) range(res$y)))
+  plot(xrange, yrange, type="n", xlab = xlab, ylab = ylab, main = main)
+  for (i in seq_along(allqq)) {
+    points(allqq[[i]], col = col[i], pch = pch[i], ...)
+    if (qqlines) qqline(allqq[[i]]$y, col = col[i], ...)
+  }
+  if(legend) legend("topleft", legend = names(allqq), col = col, pch = pch)
+}
+```
+
+---
+title: "aflevering 6"
+output: html_document
+date: "2025-03-24"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+##opsætning
+
+```{r}
+skaerm<-read.csv("/Users/asgeraircool/rdata/Smartphone.csv",stringsAsFactors = TRUE)
+head(skaerm)
+```
+
+##a
+
+```{r}
+eks1<-subset(skaerm,subset = Eksperiment=="Ex1")
+eks2<-subset(skaerm,subset = Eksperiment=="Ex2")
+qqnorm_multi(eks1$SPD,factor(eks1$Alder))
+```
+
+det ser ikke urimeligt uf at antage at data er normaltfordelt
+
+##b
+
+$M_0:SPD_{i,j,k}\sim N(\mu_{i,j},\sigma^2_{i,j}) \,\, for \,\,i\in\{Ex1,Ex2\}\,\,j\in\{unge,midaldrene,aeldre\}\,\, k\in\{1,\dots,n_{i,j}\}\,\,+UAFH$
+
+```{r}
+#vi laver de 6 modeller
+ung1<-subset(eks1,subset = Alder=="unge")
+ung2<-subset(eks2,subset = Alder=="unge")
+mid1<-subset(eks1,subset = Alder=="midaldrende")
+mid2<-subset(eks2,subset = Alder=="midaldrende")
+gammel1<-subset(eks1,subset = Alder=="aeldre")
+gammel2<-subset(eks2,subset = Alder=="aeldre")
+```
+
+vi opstiler hypotesen om fælles varians
+
+$H_0:\sigma_{i,j}^2=\sigma^2_{k,m} \,\,\,for\,\,\,i,k\in\{Ex1,Ex2\}\,\, og\,\,j,m\in\{unge,midaldrene,aeldre\}$
+
+```{r}
+
+#opdeler data for at lave bartlett's test 
+lmu1<-lm(SPD~1,data=ung1)
+lmu2<-lm(SPD~1,data=ung2)
+lmm1<-lm(SPD~1,data=mid1)
+lmm2<-lm(SPD~1,data=mid2)
+lmg1<-lm(SPD~1,data=gammel1)
+lmg2<-lm(SPD~1,data=gammel2)
+
+
+bartlett.test(list(lmu1,lmu2,lmm1,lmm2,lmg1,lmg2))
+```
+
+p værdi ikke kritisk da accepteres hypotesen
+
+```{r}
+interaction.plot(skaerm$Eksperiment,skaerm$Alder,skaerm$SPD)
+interaction.plot(skaerm$Alder,skaerm$Eksperiment,skaerm$SPD)
+```
+
+plottet ser nogen lunde lineært ud vi sr i hvertfald at der ikke nogle
+tydelige brud på antagelserne i den additive model så vi tester om vi
+kan gå i den additive model
+$M_1:SPD_{i,j,k}\sim N(\mu_{i,j},\sigma^2_0) \,\, for \,\,i\in\{Ex1,Ex2\}\,\,j\in\{unge,midaldrene,aeldre\}\,\, k\in\{1,\dots,n_{i,j}\}\,\,+UAFH$
+
+$$M_2:SPD_{i,j,k}\sim N(\alpha_i+\beta_j,\sigma^2_0) \,\, for \,\,i\in\{Ex1,Ex2\}\,\,j\in\{unge,midaldrene,aeldre\}\,\, k\in\{1,\dots,n_{i,j}\}\,\,+UAFH$$
+
+vi laver de tilsvarende lineære modeller og kører F-test via anova
+
+```{r}
+m1<-lm(SPD~Eksperiment:Alder,data=skaerm)
+m2<-lm(SPD~Eksperiment+Alder,data=skaerm)
+anova(m2,m1)
+```
+
+ikke kritisk p værdi da redures modellen til den additive
+
+##c
+
+vi opskriver den reducerede model for qt aldersgruppe ikke har nogen
+effetkt
+
+$M_3^{E}:SPD_{i,k}\sim N(\alpha_i,\sigma^2_0)\,\, for\,\, i\in\{Ex1,Ex2\}, k\in\{1,\dots,n_{i}\}\,\,+UAFH$
+
+```{r}
+#vi bygger m3^E og der om modellen kan reduceres med anova
+m3e<-lm(SPD~Eksperiment,data=skaerm)
+anova(m3e,m2)
+```
+
+p værdi er kritisk så hypotesen om at alder ikke har nogen betydning
+forkastes
+
+vi opstiller den anden model
+$$M_3^{A}:SPD_{j,k}\sim N(\beta_j,\sigma^2_0)\,\, for\,\, j\in\{unge,midaldrende,aeldre\}, k\in\{1,\dots,n_{j}\}\,\,+UAFH$$
+vi gør lige som før og laver ny lineær model og tjekker om vi kan
+reducerer med anova
+
+```{r}
+#vi bygger m3^A og der om modellen kan reduceres med anova
+m3a<-lm(SPD~Alder,data=skaerm)
+anova(m3a,m2)
+```
+
+igen er p værdien pritisk og vi reducerer ikke modellen altså er
+modellen vi ikke umildbart kan reducere ydderligere
+
+$$M_2:SPD_{i,j,k}\sim N(\alpha_i+\beta_j,\sigma^2_0) \,\, for \,\,i\in\{Ex1,Ex2\}\,\,j\in\{unge,midaldrene,aeldre\}\,\, k\in\{1,\dots,n_{i,j}\}\,\,+UAFH$$
+##d
+
+```{r}
+summary(m2)
+confint(m2)
+sigma(m2)
+```
+
+vi aflæser fra summary at skønnet for middelværdien for ældre i
+experiment 1(som er vores udgangspunt) er 2816.4 fra confint aflæser vi
+konfidensintervallet for forskellen i middelværdi til [-1465.283 ,
+-317.782086]
+med et spredningsskøn på:
+787.24
+

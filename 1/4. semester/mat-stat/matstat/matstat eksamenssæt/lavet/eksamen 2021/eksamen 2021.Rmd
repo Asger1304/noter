@@ -1,0 +1,187 @@
+---
+title: "eksamen 2021"
+Author: Asger Lauridsen
+date: "2025-05-28"
+output: pdf_document
+---
+
+# opgave 1 
+## 2.a
+reklamen siger at vi har en forventet ventetid på 6 minutter eller mindre vi skal tjekke om hypotesen kan være sand ud fra stikpprøven 
+altså ønsker vi at teste om det kan passe at vi har fået et så stort udfald under hypotesen om at middelværdien er 6 eller $\theta=4$
+
+ud fra reklamen skal vi bare have at middelværdien er maks 6 et udflad som er mindre end 6 vil derved ikke som sådan være kritisk for hypotesen da det vil indikerer en lavere middelværdi
+en markant højere værdi vil til gengæld godt kunne indikerer at 6m er for lav en middelværdi og $\theta$ under hypotesen er for lav 
+
+
+
+## 2.b
+da CDF'en er kontinuert er fraktilen entydig og blot dens inverse (i (0,1))
+$$
+P(X\leq q_p)=1-2*exp(\dfrac{-q_p}{\theta})+exp(\dfrac{-2*q_p}{\theta})=p \newline
+\Leftrightarrow (1-exp(\dfrac{-q_p}{\theta}))^2=p\Leftrightarrow 1-\sqrt{p}=exp(\dfrac{-q_p}{\theta}) \newline \Leftrightarrow q_p=-\theta*log(1-\sqrt{p})
+$$
+
+## 2.c
+vi skal have fat i præcis 1-$\alpha$ fraktilen
+$$C=q_{0.95}=-\theta*log(1-\sqrt{0.95})=-4*log(1-\sqrt{0.95})$$
+
+```{r}
+C_095=-4*log(1-sqrt(0.95))
+C_095
+```
+vi udregner styrken som er præcis chancen for at forkaste hypotesen gevet at den alternative hypotese er sand 
+dette bliver præcis 
+$$P(H_o forkastet | H_A)=1-P_{\theta_A}(X\leq C)$$
+som vi blot kan regne da vi kender fordelingfunktionen for X også under H_A
+```{r}
+1-(1-exp(-C_095/8))^2
+```
+altså har testen en styrke på 0.293
+
+## 2.d
+ideen er at vi sætter de k først empiriske momenter lig fordelingens teoretiske og finder k de k parametre der fra 
+altså i dette tilfælde
+$$\bar{X}.=\dfrac{3}{2}\theta\Leftrightarrow \hat{\theta}=\dfrac{2}{3}\hat{X}.$$
+dette giver os moment estimatet for stikprøven
+```{r}
+x<-c(12,5,15,20,8)
+th<-2/3*mean(x)
+th
+```
+
+## 2.e
+under hypotesen har vi 
+$$\bar{X}.\approx N(\dfrac{3}{2}\theta,\dfrac{5*\theta^2}{4*n}) \Leftrightarrow \dfrac{\bar{X}.-\dfrac{3}{2}\theta}{\theta*\sqrt{\dfrac{5}{4*n}}}\approx N(0,1)
+$$
+da kan vi konstruere et 95% ensidet konfidensinterval
+$$P(\dfrac{\bar{X}.-\dfrac{3}{2}\theta}{\theta*\sqrt{\dfrac{5}{4*n}}}\leq u_{0.95})=P(\dfrac{2*\dfrac{\bar{X}.}{\theta}-3}{\sqrt{\dfrac{5}{n}}}\leq u_{0.95})\newline =P(2*\dfrac{\bar{X}.}{\theta}\leq u_{0.95}*\sqrt{\dfrac{5}{n}}+3)=P(\bar{X}\leq \dfrac{\theta}{2}(u_{0.95}*\sqrt{\dfrac{5}{n}}+3))$$
+altså for denne stikprøve under hypotesen 
+```{r}
+C_1<-4/2*(qnorm(0.95)*1+3)
+C_1
+
+```
+
+## 2.f
+```{r}
+rmeanwait <- function(n, size = 1, theta = 1) {
+   replicate(n, theta * mean(-log(1 - sqrt(runif(size)))))
+}
+n=10^4
+m=5
+t=4
+stikproeve<-rmeanwait(n,m,t)
+```
+
+```{r}
+sum(stikproeve>9.3)/n
+```
+i teorien vil p værdien være uniformt fordelt mellem 0 og 1 under hypotesen derfor burde vi have en sandsynlighed for type 1 fejl på omkring 0.05 derved er de 9.3 for lav og skal hæves så vi kun smide 0.05 væk
+
+vi kan prøve og se 
+```{r}
+sum(stikproeve>9.5)/n
+```
+hvor vi kan se at en højere grænse giver lavere type 1 fejl 
+
+
+# opgave 2
+## 2.a
+data kan beskrives som multinomialfordelt
+$$(A_1,A_2,A_3,A_4)\sim Multinomial(n,(\pi_1,\pi_2,\pi_3,\pi_4))$$
+## 2.b
+
+## 2.c
+den multiplikative model svarer til at sandsynlighederne for at være i en række/colonne er uafængige 
+i dette tilfælde er et tilfælde enten i kasse 1 eller 2 med sandsynlighed p og derved i 3 eller 4 med SS (1-p)
+på samme vis har vi at hver instans er i kasse 1 eller 3 med SS $\theta$ og i kasse 2 eller 4 med SS (1-$\theta$)
+
+altså er "marginalfordelingerne" eller fordeling på række / søjle binomialfordelte
+
+## 2.d
+denne test er præcis en G test for at reducere fra grundbinomial modellen 
+ob at der er 3 frie parametre i grundmodellen og 2 frie parametre under hypotesen
+```{r}
+A<-c(16,17,21,43)
+
+k<-2
+e<-c(12.59,20.41,24.42,39.58)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+
+vi har en p værdi på 0.13>0.05 da forkastes hypotesen om at vi kan reducere til den multiplikative model ikke
+# opgave 3
+## 3.a
+$$M_0: B_i\sim N(\alpha+\sum_{j=1}^5\beta_j*T_{i,j},\sigma^2) \quad for \,\,i \in \{1,...,60\}$$
+hvor $T_{i,j}$ er den i. observations værdi for Tj
+
+## 3.b
+```{r}
+dat1<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/eksamen 2021/oktan.csv")
+head(dat1)
+```
+```{r}
+m0<-lm(oktan~T1+T2+T3+T4+T5,data=dat1)
+summary(m0)
+```
+P værdien er størst for at koifficienten for T3 er 0 da droppes den fra modellen
+```{r}
+m1<-lm(oktan~T1+T2+T4+T5,data=dat1)
+summary(m1)
+```
+P værdien er størst for at koifficienten for T4 er 0 da droppes den fra modellen
+```{r}
+m2<-lm(oktan~T1+T2+T5,data=dat1)
+summary(m2)
+```
+P værdien er størst for at koifficienten for T5 er 0 da droppes den fra modellen
+```{r}
+m3<-lm(oktan~T1+T2,data=dat1)
+summary(m3)
+```
+her er vi nået til et punkt hvor p værdien for hypotesen om at koifficinterne er lig 0 er større end 0.05 i alle tilfælde da stopper backwards selection 
+og vi ender i modellen:
+$$M_3: B_i\sim N(\alpha+\beta_1*T_{1,i}+\beta_2*T_{2,i}\,\,,\sigma^2) \quad for \,\,i \in \{1,...,60\}$$
+## 3.c
+vi laver F test fra M0 til M3 med anova
+```{r}
+anova(m3,m0)
+```
+p værdi på 0.27>0.05 da er det rimeligt at reducere modellen 
+
+## 3.d
+vi laver qq plot for residualerne og plotter residualerne vs alle variablene og de reelle værdier for at se om der er en systematik
+
+```{r}
+qqnorm(m3$residuals)
+qqline(m3$residuals)
+```
+qq plttet ser super fint ud med kun de 2 nedre outliers som stadig burde være fint
+```{r}
+par(mfrow=c(1,2))
+plot(m3$residuals~dat1$T1)
+plot(m3$residuals~dat1$T2)
+plot(m3$residuals~dat1$T3)
+plot(m3$residuals~dat1$T4)
+plot(m3$residuals~dat1$T5)
+plot(m3$residuals~m3$fitted.values)
+```
+vi ser at plottene igen ser igen dejligt normaltfordelte ud med de 2 outliers dadig væk men jeg tænker at det er ok at have de 2 ud af 60 som ikke er snor lige
+vi plotter også lige fittede vs reelle
+```{r}
+plot(dat1$oktan~m3$fitted.values)
+abline(a=0,b=1)
+```
+igen ser det ikke ud som om der som sådan er nogen systematik afvigelse i residualerne og at de snor sig nogen lunde pænt ad de fittede værdier 
+
+## 3.e
+```{r}
+confint(m3)
+```
+dem aflæser vi blot fra confint kaldet til 
+for T1 : [-102.7 , -92.6]
+for T2 : [39.14 , 39.87]
+

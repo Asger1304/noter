@@ -1,0 +1,218 @@
+---
+title: "eksamen 2022"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-06-01"
+---
+
+# opgave 1
+
+## 1.1
+vi starter med 2 multinomialmodeller med 3 kasser/mulige udfald
+$$M_0:(A_{11},A_{12},A_{13})\sim Multnomial(n_1,(\pi_{11},\pi_{12},\pi_{13}))$$
+$$(A_{21},A_{22},A_{23})\sim Multnomial(n_2,(\pi_{21},\pi_{22},\pi_{23}))$$
+hvor $$\sum_{j}\pi_{ij}=1\quad \pi_{ij}\geq 0\quad i=1,2\quad j=1,2,3$$
+
+hypotesen siger:
+$$H_0:\pi_{11}=\pi_{21}\quad\pi_{12}=\pi_{22}\quad \pi_{13}=\pi_{23}$$
+
+
+## 1.2
+vi bruger G testen som er en transformation af likelihood ratio testen for modelreduktion fra M_0 til en ny model under hypotesen for at bruge den skal vi dog sikre os at G testoren er assymptotisk chi^2 fordelt som vi gør ved at tjekke de forventede under hypotesen
+
+jeg kører g testet med kode givet i undervisningen 
+```{r}
+obs=rbind(c(37,17,24),c(49,31,34))
+ex=outer(rowSums(obs),colSums(obs))/sum(obs)
+obs1=ifelse(obs==0,1,obs) 
+G=2*sum(obs*log(obs1/ex))
+pval=1-pchisq(G,(dim(obs)[1]-1)*(dim(obs)[2]-1)) 
+(dim(obs)[1]-1)*(dim(obs)[2]-1)
+c(Forventede=ex)
+c(G=G,Pvaerdi=pval)
+```
+alle de forventede >5 da er G testet chi^2 fordelt med 4(antallet af kasser for hver gruppe-1 gange antallet af grupper) - 2(antallet af kasser -1)= 2 frihedsgrader 
+
+testen giver en p værdi på 0.6 som er langt fra kritisk for hypotesen, da er det rimeligt at antage at de 2 grupper har den samme fordeling og vi lader derved modellen reducere til 
+
+$$M_1:(A_1,A_2,A_3)\sim Multinomial(n_1+n_2,(\pi_1,\pi_2,\pi_3))$$
+med $$\sum_i\pi_i=1\quad \pi_i\geq 0$$
+
+## 1.3
+vi bruger prop.test
+```{r}
+prop.test(37+49,192)
+```
+giver os 95% konfidensinterval for $\pi_1$[0.3767700 , 0.5211815]
+
+
+
+## 1.4
+under den nye hypotese har vi
+$$H_0:\pi_1=\pi_2=\pi_3=1/3$$
+vi regner de forventede og kører igen en G test hvor vi ser at der ingen frie parametre er under hypotesen
+```{r}
+A<-c(86,48,58)
+
+p<-1/3*c(1,1,1)
+k<-0
+e<-p*sum(A)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(forventet=e)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+de forventede er en del større end 5 så testen er valid,
+vi observerer en pværdi meget mindre end 0.05 da forkaster vi hypotesen om at chancen for at vinde på hjemmebane udebane og få uafgjort ikke er den samme
+
+# opgave 2
+jeg indlæser data og danner en 
+```{r}
+dat1<-read.csv("bakteriehaemmer.csv",stringsAsFactors = T)
+dat1$gruppe<-interaction(dat1$Haemmer,dat1$Bakterietype)
+head(dat1)
+```
+
+## 2.1
+$$M_0:X_{i,j,k}\sim N(\mu_{j,k},\sigma^2_{j,k})\quad i=1,...,5\quad j=anti,sølv1,sølv2\quad k=B1,...,B4$$
+
+
+
+```{r}
+unique(dat1$gruppe)
+bartlett.test(dat1$radius~dat1$gruppe)
+```
+p værdien for bartletts test er >0.05 da er det rimeligt at antage fælles varians og reducere til modellen 
+$$M_1:X_{i,j,k}\sim N(\mu_{j,k},\sigma^2)\quad i=1,...,5\quad j=anti,sølv1,sølv2\quad k=B1,...,B4$$
+
+## 2.2
+jeg laver 2 interaktionsplot 
+```{r}
+interaction.plot(dat1$Haemmer,dat1$Bakterietype,dat1$radius)
+interaction.plot(dat1$Bakterietype,dat1$Haemmer,dat1$radius)
+```
+vi ser hvad der ligner en additiv virkning mellem de forskellige grupper det eneste grafiske der vil stritte imod ville være på graf 1 (den hvor vi kigger på sølvs indvirkning) her ser vi at den ene linje krydser den anden men da de allerede er meget tætte på hinanden og vi stadig har så små datasæt tror vi stadig på en additiv virkning da de ellers er nogen lunde parralelle
+
+## 2.3
+vi gør det ved en F test fra en lineær normal model til en anden via anova
+vi vil gerne teste
+$$H_0:\mu_{j,k}=\alpha_j+\beta_k \quad j=anti,sølv1,sølv2\quad k=B1,...,B4$$
+modellen under H_0 kalder vi M_2
+det gør jeg ved først at fitte begge modeller og så tjekke hypotesen om modelreduktion med anova
+```{r}
+m1<-lm(radius~Haemmer*Bakterietype,data=dat1)
+m2<-lm(radius~Haemmer+Bakterietype,data=dat1)
+anova(m2,m1)
+```
+med en p værdi på 0.378>0.05 er data langt fra kritisk for hypotesen da er den additive model rimelig og vi lader os reducere til 
+$$M_2:X_{i,j,k}\sim N(\alpha_j+\beta_k,\sigma^2)\quad i=1,...,5\quad jj=anti,sølv1,sølv2\quad k=B1,...,B4$$
+
+## 2.4
+dette interval trækker vi bare dirkete ud af R 
+```{r}
+confint(m2)
+```
+anti er referencepunktet i modellen da skal vi bare have fat i spannet for "Haemmersoelv1"
+altså skønnet for $\alpha_{soelv1}-\alpha_{anti}$ : [-16.6715824 , -13.575418]
+
+
+## 2.5
+vi tjekker 2 hypoteser
+$$H_0:\alpha_i=\alpha\quad i=anti,soelv1,soelv2$$
+vi tjekker igen ved et F test mellem lineære normale modeller
+```{r}
+m3<-lm(radius~1+Bakterietype,data=dat1)
+anova(m3,m2)
+```
+data er kritisk for hypotesen da forkastes hypotesen om at valget af haemmer er ligegyldigt
+
+
+$$H_0^{A}:\beta_i=\beta \quad i=B1,...,B4$$
+igen tester vi med en F test gennem anova
+```{r}
+m3a<-lm(radius~1+Haemmer,data=dat1)
+anova(m3a,m2)
+```
+p værdien er igen under 0.05 og derved kritisk for hypotesen om at valget af bakterie er ligegyldigt 
+
+
+
+# opgave 3
+
+## 3.1
+F er kontinuert og stregnt monoton derved er den invertible og fraktilen er entydig og definert således$F(q_p)=p$
+$$1-exp(-\lambda*\sqrt{q_p})=p\Leftrightarrow1-p=exp(-\lambda*\sqrt{q_p})$$
+$$\Leftrightarrow log(1-p)=-\lambda*\sqrt{q_p}\Leftrightarrow -\dfrac{log(1-p)}{\lambda}=\sqrt{q_p}$$
+noter at venstresiden altid er positiv så vi kvadrerer bare begge sider 
+$$\Leftrightarrow q_p=\dfrac{(log(1-p))^2}{\lambda^2}$$
+
+
+
+## 3.2
+```{r}
+dat2<-read.csv("sim.csv")
+head(dat2)
+```
+
+```{r}
+actual<-sort(dat2$Xsim)
+theoretical<-(1:length(actual)-1/2)/length(actual)
+theoreticalvalues<-(log(1-theoretical))^2
+plot(actual~theoreticalvalues)
+abline(a=0,b=1)
+```
+værdierne snor sig super fint omkring identitestlinjen hvor der så ikke er særlig mange ekstremværdier og tittet derved  
+
+## 3.3
+vi finder først 2.momentet for en eksponentialfordeling da det er 1. momentet for vores fordeling(per opgavebestrivelsen)
+
+$$E[X]=E[Z^2]$$
+hvor Z er eksponentialfordelt vi har vist i en TØ opgave til iss at
+$$E[Z^k]=\dfrac{k!}{\lambda^k}$$
+da:
+$$E[X]=\dfrac{2}{\lambda^2}$$
+
+vi sætter det teoretiske 1. moment lig det empiriske
+$$\hat{X}.=\dfrac{2}{\lambda^2}\Leftrightarrow\lambda^2=\dfrac{2}{\hat{X}.}\Leftrightarrow \hat\lambda^M=\sqrt{\dfrac{2}{\bar{X}.}}$$
+vi regner det i data
+
+```{r}
+LamMom<-sqrt(2/mean(dat2$Xsim))
+LamMom
+```
+
+## 3.4
+jeg koder et for loop
+
+```{r}
+set.seed(42)
+Nsim<-1000
+Nantal<-100
+boot<-numeric(Nsim)
+for (i in 1:Nsim){
+  x<-rexp(Nantal,1)^2
+  boot[i]<-sqrt(2/mean(x))
+}
+```
+
+
+```{r}
+hist(boot,freq = F,breaks = 25)
+```
+her er det sd skønnet 
+```{r}
+sd(boot)
+```
+
+
+
+
+
+
+
+
+
+
+
+

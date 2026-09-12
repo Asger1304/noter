@@ -1,0 +1,149 @@
+---
+title: "tøuge 8"
+output: html_document
+date: "2025-03-23"
+---
+##1.55
+
+##1.56
+a)
+```{r}
+spraekker<-read.csv("/Users/asgeraircool/rdata/Spraekker.csv", stringsAsFactors = TRUE)
+
+head(spraekker)
+spraekker$logL<-log(spraekker$Laengde)
+spraekker$logB<-log(spraekker$Bredde)
+plot(logB~logL,data=spraekker,col=Omraade)
+levels(spraekker$Omraade)
+
+japan<-subset(spraekker,subset = Omraade=="Kyushu")
+canada<-subset(spraekker,subset = Omraade=="RM")
+england<-subset(spraekker,subset = Omraade=="Kilve")
+
+lmjap<-lm(logB~logL,data=japan)
+lmcan<-lm(logB~logL,data=canada)
+lmeng<-lm(logB~logL,data=england)
+
+summary(lmjap)
+abline(lmjap,col=1)
+abline(lmcan, col=3)
+abline(lmeng,col=2)
+```
+```{r}
+summary(lmjap)
+```
+
+b)
+$log{B_{i,j}}\sim N(\alpha_j+\beta_j*t_{j,i},\sigma^2_j)\,\,for \,\,j\in\{england,\,canada,\,japan\}\, and\,\,i \in1,\dots,n_j$
+$H_0:\sigma_i=\sigma_j\,\, \forall i,j \in \{england,\,canada,\,japan\}$
+
+```{r}
+bartlett.test(list(lmjap,lmcan,lmeng))
+```
+vi får at vide at vi skal accepterer hypotese alligevel.
+```{r}
+m0<-lm(logB~logL*Omraade,data=spraekker)
+
+m1<-lm(logB~logL+Omraade,data=spraekker)
+anova(m1,m0)
+summary(m1)
+m2<-lm(logB~logL,data=spraekker)
+anova(m2,m1)
+```
+anden test er kritisk med meget lav p værdi da forkaster vi hypotesen om ens hældning
+```{r}
+confint(m1)
+```
+vi kan godt sige at hældningen er 1 da 1 er inde for vores 95% konfidensiterval
+##1.61
+```{r}
+fisk<-read.csv("/Users/asgeraircool/rdata/fishchrome.csv")
+head(fisk)
+fdag<-factor(fisk$days)
+fkonc<-factor(fisk$conc)
+
+```
+```{r}
+interaction.plot(fdag,fkonc,fisk$logchrom)
+```
+
+vi ser at koncentrationen ser ud til at skubbe grafen op nogen lunde 
+```{r}
+interaction.plot(fkonc,fdag,fisk$logchrom)
+```
+igen ser vi at grafen bliver skubbet pænt op når dagene går op
+
+
+```{r}
+m1<-lm(fisk$logchrom~fkonc+fdag)
+summary(m2)
+
+m2_konc<-lm(fisk$logchrom~fkonc)
+m2_dag<-lm(fisk$logchrom~fdag)
+anova(m2_konc,m1)
+anova(m2_dag,m1)
+
+
+```
+begge model skift er kritiske så modellen kan ikke reduceres yderligere
+
+```{r}
+confint(m1)
+```
+
+konfidensintervaller for forskellen er [0.86875250, 1.0280363]
+aflæst direkte fra tabellen
+
+
+##1.62
+```{r}
+fisk<-read.csv("/Users/asgeraircool/rdata/fishchrome.csv")
+fisk$logkonc<-log(fisk$conc)
+
+#head(fisk)
+dag1<-subset(fisk,subset =days==1 )
+dag2<-subset(fisk,subset =days==2 )
+dag3<-subset(fisk,subset =days==3 )
+dag4<-subset(fisk,subset =days==4 )
+dag6<-subset(fisk,subset =days==6 )
+dag8<-subset(fisk,subset =days==8 )
+
+#head(dag1)
+head(fisk)
+fisk$days=factor(fisk$days)
+levels(fisk$days)
+```
+```{r}
+
+dag1m1<-lm(logchrom~logkonc,data=dag1)
+dag2m1<-lm(logchrom~logkonc,data=dag2)
+dag3m1<-lm(logchrom~logkonc,data=dag3)
+dag4m1<-lm(logchrom~logkonc,data=dag4)
+dag6m1<-lm(logchrom~logkonc,data=dag6)
+dag8m1<-lm(logchrom~logkonc,data=dag8)
+
+
+
+plot(logchrom~logkonc,data=dag8)
+abline(dag8m1)
+```
+c)
+har tjekket dem alle slavisk og det passer skide godt
+```{r}
+bartlett.test(list(dag1m1,dag2m1,dag3m1,dag4m1,dag6m1,dag8m1))
+```
+p værdi større end 0.05 sltså godtager vi at de har ens varians 
+```{r}
+fisk$fdag<-factor(fisk$days)
+m1<-lm(logchrom~days*logkonc,data=fisk)
+m2<-lm(logchrom~days+logkonc,data=fisk)
+summary(m1)
+summary(m2)
+anova(m2,m1)
+
+```
+
+p værdi større end 0.05 da accepteres hypotesen 
+
+
+##ugeseddel opgave 1

@@ -1,0 +1,193 @@
+---
+title: "matstat eksamen 2020"
+author: Asger Lauridsen
+date: "2025-05-27"
+---
+# opgave 1 
+## 1.a
+
+vi indlæser data
+```{r}
+dat1<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/eksamen 2020/honning.csv")
+```
+vi kigger lidt på det
+```{r}
+head(dat1)
+#View(dat1) jeg har selv kørt komandoen og kigget på data men jeg tænker ikke det skal med i markdownen
+```
+når man kigger på hele datasættet ser jeg at der er stor variation i både koncentrationen før og efter men at de helt sikkert har noget med hinanden at gøre rækkevist da vælger jeg at behandle dem som matched pairs og køre test efter det.
+
+jeg opstiller nulhypotesen og alternativet
+$$H_0:\mu_{efter}-\mu_{foer}=0\quad H_A:\mu_{efter}-\mu_{foer}>0$$
+den alternative hypotese vi ønsker at teste efter er at middelværdien bliver højere efter tid
+```{r}
+obs<-mean(dat1$HMFend)-mean(dat1$HMFstart)
+
+d<-dat1$HMFend-dat1$HMFstart
+n<-length(d)
+
+N<-10^4
+result<-numeric(N)
+for (i in 1:N){
+signs<-sample(c(1,-1),n,replace = TRUE)
+result[i] <- mean(signs*d)
+}
+
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_stor
+
+```
+p_obs<0.05 da forkasten nul-hypotesen om at middelværdien er ens og vi må have at der er en forøgelse fra start til stop
+
+# opgave 2
+vi indhenter data 
+```{r}
+dat2<-read.csv("/Users/asgeraircool/Desktop/matstat eksamenssæt/eksamen 2020/Musling.csv",stringsAsFactors = TRUE)
+```
+```{r}
+head(dat2)
+```
+
+## 2.a
+$$M_0:P_{i,j}\sim N(\mu_i,\sigma_i^2)\quad for \,\, i\in\{1,...,5\} \quad for\,\, j\in\{1,...,5\}$$
+hvor i erne er gruppenummeret som i dette tilfælde er tidspunktet
+
+```{r}
+g1<-subset(dat2,subset = Dato=="Jul06")
+g2<-subset(dat2,subset = Dato=="Jul27")
+g3<-subset(dat2,subset = Dato=="Aug11")
+g4<-subset(dat2,subset = Dato=="Aug27")
+g5<-subset(dat2,subset = Dato=="Sep09")
+lm01<-lm(Protein~1,data=g1)
+lm02<-lm(Protein~1,data=g2)
+lm03<-lm(Protein~1,data=g3)
+lm04<-lm(Protein~1,data=g4)
+lm05<-lm(Protein~1,data=g5)
+```
+```{r}
+bartlett.test(list(lm01,lm02,lm03,lm04,lm05))
+```
+p værdien for bartletts test er 0.71>0.05
+forkaster vi ikke hypotesen om at de har fælles varians
+
+
+
+## 2.b(fix)
+```{r}
+dato<-dat2$Dato
+boxplot(dat2$Protein~dat2$Tid)
+boxplot(dat2$Protein~factor(dat2$Tid))
+```
+```{r}
+
+```
+
+## 2.c
+$$M_0:P_{i,j}\sim N(\mu_i,\sigma^2)\quad for \,\, i\in\{1,...,5\} \quad for\,\, j\in\{1,...,5\}$$
+```{r}
+M1<-lm(dat2$Protein~factor(dat2$Tid))
+summary(M1)
+```
+```{r}
+confint(M1)
+```
+da 6/7 er referencegruppen skal vi bare finde for DatoSep9
+altså er konfidensintervallet: [19.9, 107]
+## 2.d
+$$M_2:P_i\sim N(\alpha+\beta*t_i,\sigma^2)\quad i\in\{1,...,25\}$$
+```{r}
+M2<-lm(Protein~Tid,data=dat2)
+plot(Protein~Tid,data=dat2)
+abline(M2)
+```
+jeg laver ftesten med anova
+
+```{r}
+anova(M2,M1)
+```
+
+## 2.e
+konfidentintervallet for $\beta$ er præcis$[65* \beta_L ,65*\beta_H]$
+```{r}
+confint(M2)
+```
+
+```{r}
+0.115525*65
+1.322946*65
+```
+intervallet er meget bredt 
+
+
+
+
+
+
+
+
+
+
+
+# opgave 3
+## 3.a
+$$(A_1,A_2,A_3,A_4)\sim Multionomial(n,(\pi_1,\pi_2,\pi_3,\pi_4))$$
+hvor $\sum_{i=1}^4\pi_i=1,\quad \pi_i\geq0$
+## 3.b
+vi skriver den generelle likelihood funktion i multinomialmodellen:
+$$L(\pi_1,\pi_2,\pi_3,\pi_4)=\dfrac{n!}{a_1!a_2!a_3!a_4!}*\pi_1^{a_1}*\pi_2^{a_2}*\pi_3^{a_3}*\pi_4^{a_4}$$
+for 
+$$\pi_1(\theta)=\theta,\quad \pi_2(\theta)=(1-\theta)\theta,\quad \pi_3(\theta )=(1-\theta)^2*\theta,\quad \pi_4(\theta)=(1-\theta)^3$$
+vi putter ind i Likelihood funktionen som giver os 
+$$L(\theta )=\dfrac{n!}{a_1!a_2!a_3!a_4!}*\theta^{a_1}*((1-\theta)\theta)^{a_2}*((1-\theta)^2\theta)^{a_3}*(1-\theta)^{3*a_4} \newline = \theta^{a_1+a_2+a_3}*(1-\theta)^{a_2+2*a_3+3*a_4}$$
+som er likelihood funktionen under hypotesen
+for at finde MLE tager log og finder maksimum
+$$l(\theta)=(a_1+a_2+a_3)*log(\theta)+(a_2+2a_3+3a_4)*log(1-\theta) \newline \dfrac{\partial l}{\partial\theta}=\dfrac{a_1+a_2+a_3}{\theta}-\dfrac{a_2+2a_3+3a_4}{1-\theta}=0 \newline \Leftrightarrow (a_1+a_2+a_3)(1-\theta)=(a_2+2a_3+3a_4)\theta \newline \Leftrightarrow a_1+a_2+a_3=(a_1+2a_2+3a_3+3a_4)\theta \newline \Leftrightarrow \hat{\theta}=\dfrac{a_1+a_2+a_3}{a_1+2a_2+3a_3+3a_4}
+$$
+vi tjekker efter om vi får det samme tal som opgaven giver 
+```{r}
+(29+21+21)/(29+2*21+3*21+3*129)
+```
+det gør vi så jeg tænker ikke nærmere over det 
+
+for en god ordens skyld tjekker vi den 2. afledte 
+$$\dfrac{\partial^2 l}{\partial\theta^2}=-\dfrac{a_1+a_2+a_3}{\theta^2}-\dfrac{a_2+2a_3+3a_4}{(1-\theta)^2}<0$$
+da er theta hat MLE for modellen
+## 3.c
+
+vi laver et G test som bygger på likelihood tratiotestet for at se om det er rimeligt at reducere modellen 
+vi ser at der er 3 frie parametre i grundmodellen og 1 frit parameter under hypotesen
+
+```{r}
+ph<-(29+21+21)/(29+2*21+3*21+3*129)
+A<-c(29,21,21,129)
+#regn vektoren af sandsynlighederne i m_1
+p<-c(ph,(1-ph)*ph,(1-ph)^2*ph,(1-ph)^3)
+k<-1
+e<-p*sum(A)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(p)-1-k)
+e
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+vi ser at de forventede alle er større end 5 da er G testoren nogen lunde chi^2 fordelt med 2 frihedsgrader
+da får vi en teststørrelse og en p værdi 
+som er langt over 0.05 da forkaster vi ikke fastrate hypotesen og siger at det er rimeligt at reducere modellen 
+
+# opgave 4
+## 4.a
+vi ved at de teoretiske fraktiler for en normalfordeling $N(\mu,\sigma^2)$ vil liggee sig lineært som funktion af fraktilerne for en standardnormalfordeling(dette har vi vist og set til TØ) dette kommer 
+$$ lad \, X\sim N(0,1),\quad Y=\sigma*X+\mu\sim N(\mu,\sigma^2) \newline da \quad P(X\leq x)=P(\sigma*X+\mu\leq\sigma*x+\mu)=P(Y\leq\sigma*x+\mu)$$
+da er fraktilerne for en vilkårlig normalfordeling lineære i fraktilerne for standardnormalfordelingen med hældning $\sigma$ og skærring $\mu$
+og de empiriske fraktiler vil følge nogenlunde
+da skønner vi hældningen og sæter den i anden
+
+```{r}
+(3.25-0.5)/4
+```
+```{r}
+0.6875^2
+```
+altså er mit bedste bud 0.5
+altså c
+## 4.b

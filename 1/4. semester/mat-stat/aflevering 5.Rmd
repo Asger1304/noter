@@ -1,0 +1,81 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+loeve<-read.csv("/Users/asgeraircool/rdata/Loeve.csv")
+length(loeve$Sortfraktion)
+```
+
+##part 1
+
+```{r}
+plot(Sortfraktion~Alder,data=loeve,ylim=c(0,1))
+```
+
+jo jeg vil sige der er en fin lineær sammenhæng, vi ser i hvertfald at støøre alder medfører større del sort
+
+##part 2
+
+$M_0:Y_i\sim N(\alpha+\beta*t_i,\sigma^2) \,\,for\,\,i\in1,...,32$
+
+```{r}
+#vi fitter den lineære model
+lm0<-lm(Sortfraktion~Alder,data=loeve)
+summary(lm0)
+```
+
+```{r}
+plot(Sortfraktion~Alder,data=loeve,ylim=c(0,1))
+abline(a=0.069696,b=0.058591)
+#spredning aflæses
+sigma(lm0)^2
+
+```
+
+```{r}
+#residualplot
+plot(loeve$Alder,lm0$residuals,ylim=c(-0.5,0.5))
+abline(a=0,b=0)
+
+```
+
+vi kigger på residual plottet og ser at det ikke ligner at der er noget systematik i afvigelserne
+
+##part 3
+```{r}
+inversReg=function(lmUD,y){
+ sumUD=summary(lmUD)
+ xbar=mean(lmUD$model[,1])
+ m=length(y)
+ ybar=mean(y)
+ t0=qt(0.975,sumUD$df[2])
+ ahat=sumUD$coefficients[1,1]
+ bhat=sumUD$coefficients[2,1]
+ s2r=(sumUD$sigma)^2
+ ssdt=s2r/(sumUD$coefficients[2,2])^2
+ uA=bhat^2-t0^2*s2r/ssdt
+ if (uA>0){
+ uB=-2*t0^2*s2r*(ybar-xbar)/(bhat*ssdt)
+ uC=-t0^2*s2r*(1/m+1/(sumUD$df[2]+2)+(ybar-xbar)^2/(bhat^2*ssdt))
+ thetahat=(ybar-ahat)/bhat
+ konfInt=thetahat+(-uB+c(-1,1)*sqrt(uB^2-4*uA*uC))/(2*uA)
+ return(list(Estimat=thetahat,Konfidensinterval=konfInt))
+ } else {
+  return("Problem er ikke veldefineret da beta kan vÃ¦re nul")
+ }
+}
+
+
+
+```
+
+```{r}
+data=data.frame(prediktor=c(0.2,0.4,0.6,0.8),prediktion=c(inversReg(lm0,0.2)$Estimat,inversReg(lm0,0.4)$Estimat,inversReg(lm0,0.6)$Estimat,inversReg(lm0,0.8)$Estimat),nedre=c(inversReg(lm0,0.2)$Konfidensinterval[1],inversReg(lm0,0.4)$Konfidensinterval[1],inversReg(lm0,0.6)$Konfidensinterval[1],inversReg(lm0,0.8)$Konfidensinterval[1]),ovre=c(inversReg(lm0,0.2)$Konfidensinterval[2],inversReg(lm0,0.4)$Konfidensinterval[2],inversReg(lm0,0.6)$Konfidensinterval[2],inversReg(lm0,0.8)$Konfidensinterval[2]))
+
+
+data
+```
+
+hvis den har en fraktion på over 80% ville jeg sige da vi så(i modellen) har en eget lav sandsynlighed for at løven er under 5 år men hvis det er meget vigtigt at den skal være mindst 5 år gammel ville jeg nok gå så højt som muligt

@@ -1,0 +1,391 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={tø uge 2},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{tø uge 2}
+\author{}
+\date{\vspace{-2.5em}2025-01-30}
+
+\begin{document}
+\maketitle
+
+Compute the mean x and median m of the eight numbers
+\(1, 2, 4, 5, 6, 8, 11\) 15. Let \[f (x) = \sqrt{x}\].\newline
+
+Apply this transformation to the data, and then com- pute the mean \(x̃\)
+and the median \(m̃\) of the transformed data
+
+question a: \[\text{ Is}\,\, f (x) = x̃?\]\newline question b:
+\[\text{Is}  f ( m ) = m̃?\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#we write up the data }
+\NormalTok{x}\OtherTok{=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{5}\NormalTok{,}\DecValTok{6}\NormalTok{,}\DecValTok{8}\NormalTok{,}\DecValTok{11}\NormalTok{)}
+\CommentTok{\#calculate the transformed data}
+\NormalTok{fx}\OtherTok{=}\FunctionTok{sqrt}\NormalTok{(x)}
+\CommentTok{\# find the mean for the data}
+\NormalTok{xb}\OtherTok{=}\FunctionTok{mean}\NormalTok{(x)}
+\CommentTok{\#then the mean of the transformation }
+\FunctionTok{mean}\NormalTok{(fx)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2.177832
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#then f of the mean }
+\FunctionTok{sqrt}\NormalTok{(xb)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2.299068
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#now we do the exactly the same but for the median }
+\NormalTok{m}\OtherTok{=}\FunctionTok{median}\NormalTok{(x)}
+\FunctionTok{median}\NormalTok{(fx)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2.236068
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sqrt}\NormalTok{(m)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2.236068
+\end{verbatim}
+
+the mean is not equal since f is concave then\\
+\[f(\dfrac{1}{n}*\sum_{i=1}^nx_i)\leq \dfrac{1}{n} \sum_{i=1}^nf(x_i)\]
+the median in this case is equal but this is only true in general when f
+in linear or n is uneven and f is montone
+
+Let x and m denote the mean and median, respectively, of
+\[x_1 < x_2 < · · · < x_n\] Let f be a real-valued function.
+
+\begin{enumerate}
+\def\labelenumi{\alph{enumi})}
+\item
+  Is f(x) the mean off \[f(x_1),f(x_2),...,f(x_n)\]? no simply look at
+  the last exercise
+\item
+  Is f(m) the median off f(x1),f(x2),\ldots,f(xn)? try
+  \(x=(x_1,x_2)=(1,2)\) \(f=x^2\) not equal
+\item
+  Are there any conditions that would ensure that f (x) is the mean of
+  the transformed data? liniarity of f or no variance in x
+\item
+  Are there any conditions that would ensure that f (m) is the median of
+  the transformed data?
+\end{enumerate}
+
+liniarity of f or no variance in x or f order preserving and n uneven
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{s}\OtherTok{=}\FunctionTok{table}\NormalTok{(FlightDelays}\SpecialCharTok{$}\NormalTok{DepartTime)}
+\FunctionTok{barplot}\NormalTok{(s)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{tab }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(FlightDelays}\SpecialCharTok{$}\NormalTok{Day,FlightDelays}\SpecialCharTok{$}\NormalTok{Delayed30)}
+\FunctionTok{prop.table}\NormalTok{(tab,}\DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      
+##               No        Yes
+##   Fri 0.77394035 0.22605965
+##   Mon 0.90317460 0.09682540
+##   Sat 0.89624724 0.10375276
+##   Sun 0.92014519 0.07985481
+##   Thu 0.76678445 0.23321555
+##   Tue 0.85191083 0.14808917
+##   Wed 0.86524823 0.13475177
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{boxplot}\NormalTok{(FlightDelays}\SpecialCharTok{$}\NormalTok{FlightLength}\SpecialCharTok{\textasciitilde{}}\NormalTok{FlightDelays}\SpecialCharTok{$}\NormalTok{Delayed30)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+opgave 2.4,d vi ser at hvis flyet er forsiket er der en støøre chance
+for at det er en medium længde flyvetur men også mange flere outliers,
+jeg ville kke drage nogle konklutioner
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\NormalTok{tab }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(Recidivism}\SpecialCharTok{$}\NormalTok{Recid)}
+\FunctionTok{barplot}\NormalTok{(tab)}
+\FunctionTok{prop.table}\NormalTok{(tab)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##        No       Yes 
+## 0.6835859 0.3164141
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{tab2 }\OtherTok{\textless{}{-}}\FunctionTok{table}\NormalTok{(Recidivism}\SpecialCharTok{$}\NormalTok{Age25,Recidivism}\SpecialCharTok{$}\NormalTok{Recid)}
+\FunctionTok{prop.table}\NormalTok{(tab2,}\DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##           
+##                   No       Yes
+##   Over 25  0.6942333 0.3057667
+##   Under 25 0.6350341 0.3649659
+\end{verbatim}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+wee seee that about 30,6\% of offenders over 25 go back to prison while
+about 36.5\% of under 25 offenders go back
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{t}\OtherTok{=}\NormalTok{Recidivism}\SpecialCharTok{$}\NormalTok{Days}
+\NormalTok{s}\OtherTok{=}\NormalTok{Recidivism}\SpecialCharTok{$}\NormalTok{Type}
+\FunctionTok{boxplot}\NormalTok{(t}\SpecialCharTok{\textasciitilde{}}\NormalTok{s)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+the median reeviction time is lover for tech crimes . all quantiles are
+lover for the tech crime type
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{quantile}\NormalTok{(Recidivism}\SpecialCharTok{$}\NormalTok{Days,}\AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   0%  25%  50%  75% 100% 
+##    0  241  418  687 1095
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\NormalTok{over25 }\OtherTok{\textless{}{-}}\FunctionTok{subset}\NormalTok{(Recidivism, Age25}\SpecialCharTok{==} \StringTok{"Over 25"}\NormalTok{)}
+\NormalTok{under25 }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(Recidivism,Age25}\SpecialCharTok{==} \StringTok{"Under 25"}\NormalTok{)}
+
+\FunctionTok{plot.ecdf}\NormalTok{(over25}\SpecialCharTok{$}\NormalTok{Days)}
+\FunctionTok{plot.ecdf}\NormalTok{(under25}\SpecialCharTok{$}\NormalTok{Days)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+opgave 1.26
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{curve}\NormalTok{(}\FunctionTok{log}\NormalTok{(x),}\DecValTok{0}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{10000}\NormalTok{)}
+\FunctionTok{abline}\NormalTok{(}\AttributeTok{h=}\DecValTok{0}\NormalTok{)}
+\FunctionTok{abline}\NormalTok{(}\AttributeTok{v=}\DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{curve}\NormalTok{(x}\SpecialCharTok{*}\FunctionTok{sin}\NormalTok{(x}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{),}\DecValTok{0}\NormalTok{,}\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi,}\DecValTok{1000}\NormalTok{)}
+\FunctionTok{curve}\NormalTok{(x}\SpecialCharTok{*}\FunctionTok{cos}\NormalTok{(x}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{),}\DecValTok{0}\NormalTok{,}\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi,}\DecValTok{1000}\NormalTok{,}\AttributeTok{add =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+opgave 1.27
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\OtherTok{\textless{}{-}}\NormalTok{TXBirths2004}
+\FunctionTok{hist}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight, }\AttributeTok{freq=} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{breaks=}\DecValTok{250}\SpecialCharTok{*}\DecValTok{0}\SpecialCharTok{:}\DecValTok{20}\NormalTok{)}
+
+
+\FunctionTok{curve}\NormalTok{(}\FunctionTok{dnorm}\NormalTok{(x,}\AttributeTok{mean=}\FunctionTok{mean}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight),}\AttributeTok{sd=}\FunctionTok{sd}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight)),}\DecValTok{0}\NormalTok{,}\DecValTok{5000}\NormalTok{, }\AttributeTok{add=}\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{hist}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight, }\AttributeTok{freq=} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{breaks=}\DecValTok{50}\SpecialCharTok{*}\DecValTok{0}\SpecialCharTok{:}\DecValTok{100}\NormalTok{)}
+\FunctionTok{curve}\NormalTok{(}\FunctionTok{dnorm}\NormalTok{(x,}\AttributeTok{mean=}\FunctionTok{mean}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight),}\AttributeTok{sd=}\FunctionTok{sd}\NormalTok{(TXBirths2004}\SpecialCharTok{$}\NormalTok{Weight)),}\DecValTok{0}\NormalTok{,}\DecValTok{5000}\NormalTok{, }\AttributeTok{add=}\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tø-uge-2_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+histogrammet bliver langt mindre overskueligt og mere flimret og derved
+sværere at konkludere ud fra \}
+
+oms opgave 1.25 part a)
+
+\[\hat{F}_n(x)=\dfrac{1}{n}*\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)\]
+
+vi noterer at:
+\[\mathbb{1}_{]-\infty,x]}(X_i)=1\Leftrightarrow X_i\leq x\] og
+\[\mathbb{1}_{]-\infty,x]}(X_i)=0\Leftrightarrow X_i> x\] da er denne
+transformation bernulli med sandylingheds paramete
+\[\mathbb{P}(X_i \leq x)=F(x)\] summen af i.i.d bernulli er binomial
+\[n*\hat{F}_n(x)=\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)\] er da
+binomial
+
+del b)
+
+\[\mathbb{E}[\hat{F}_n(x)]=\dfrac{1}{n}*\mathbb{E}[n*\hat{F}_n(x)]=F(x)\]
+
+\[\mathbb{V}[\hat{F}_n(x)]=\dfrac{1}{n^2}*\mathbb{V}[n*\hat{F}_n(x)]=\dfrac{1}{n^2}*n*F(x)*[1-F(x)]\]
+
+\[=\dfrac{1}{n}*F(x)*(1-F(x))\]
+
+del c) vis
+
+\[\lim_{n\to \infty}\mathbb{P}(\lvert \hat{F}_n(x)-F(x)\lvert \geq \delta)=0 \quad \forall  \delta>0\]
+
+vi bemærker at
+\[\hat{F}_n(x)=\dfrac{1}{n}*\sum_{i=1}^n\mathbb{1}_{]-\infty,x]}(X_i)\]
+er en stikprøvemiddelværdi for varablen vi allerede har beskrevet som
+bernulli da siger store tals lov
+\[ \overline X \to^{\mathbb{P}} \mu \quad for\,\, n\to\infty \]
+
+da \[\hat{F}_n(x)\] er en stkprøve middelværdi for bernulli må:
+\[\hat{F}_n(x) \to^{\mathbb{P}}F(x)  \quad for\,\, n\to\infty \]
+
+\end{document}

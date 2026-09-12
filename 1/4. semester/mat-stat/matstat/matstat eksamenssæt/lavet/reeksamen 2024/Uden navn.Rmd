@@ -1,0 +1,240 @@
+---
+title: "Reeksamen 2024"
+date: "2025-05-30"
+output: pdf_document
+---
+# opgave 1
+
+## 1.a
+vi kan starte med at skrive likelihood fuktionen for en vilkårlig multinomialfordeling op
+
+$$L(\pi_1,\pi_2,\pi_3)=\dfrac{n!}{a_1!a_2!a_3!}*\pi_1^{a_1}\pi_2^{a_2}\pi_3^{a_3}$$
+ved at indæstte udtrykkene for $\pi_i$ først under M_0
+$$L(\theta_1,\theta_2)=\dfrac{n!}{a_1!a_2!a_3!}*(\theta_1)^{a_1}*((1-\theta_1)\theta_2)^{a_2}*((1-\theta_1)(1-\theta_2))^{a_3}$$
+under hypotesen har vi $\theta_1=\theta_2$
+ved at sætte det ind i udtrykket fra før får vi
+$$L(\theta)=\dfrac{n!}{a_1!a_2!a_3!}*(\theta)^{a_1}*((1-\theta)\theta)^{a_2}*((1-\theta)(1-\theta))^{a_3}=(\theta)=\dfrac{n!}{a_1!a_2!a_3!}*\theta^{a_1+a_2}*(1-\theta)^{a_2+2a_3}$$
+som ønsket
+
+## 1.b
+vi tager log og maksimerer
+$$l(\theta)=log(C)+(a_1+a_2)*log(\theta)+(a_2+2a_3)log(1-\theta)$$
+$$\newline \dfrac{\partial l}{\partial \theta}=\dfrac{a_1+a_2}{\theta}-\dfrac{a_2+2a_3}{1-\theta}=0\Leftrightarrow (a_1+a_2)(1-\theta)=(a_2+2a_3)\theta$$
+$$\newline \Leftrightarrow a_1+a_2=(a_1+2a_2+2a_3)\theta=(2n-a_1)\theta \newline \Leftrightarrow \hat{\theta}=\dfrac{a_1+a_2}{2n-a_1}=\dfrac{a_1+a_2}{2*120-a_1}$$
+for det aktuelle tilfælde
+```{r}
+ph<-(78+30)/(2*120-78)
+e<-120*c(ph,ph*(1-ph),(1-ph)^2)
+c(expected=e, MLE=ph)
+```
+siden de forventede er større end 5 vil G testet være assymptotisk chi^2 
+
+## 1.c
+jeg ser at M_0 faktisk bare er en ganske normal multinomialfordeling da vi vor en hver kombination af (p_1,p_2,p_3)(som er valide ift fordelingen) kan vælge thetaer så dette bliver opfyldt altså svare testen bare til den normale modelreduktion fra den basale multinomialfordeling
+så vi laver g test fra 2 frie parametre til 1 frit parameter altså har G testoren 1 frihedsgrad 
+```{r}
+A<-c(78,30,12)
+
+k<-1
+
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+p værdi på 0.44 betyder at vi ikke forkaster hypotesen og at det derved er rimeligt at reducere modellen ned til den hvor de har fælles sandsynlighed for at lykkedes 
+
+
+
+## 1.d
+endnu en g test denne gange til en model med 0 frihedsgrader så vi regner de forventede og køre test
+
+```{r}
+A<-c(78,30,12)
+p<-0.75
+k<-0
+e<-120*c(p,(1-p)*p,(1-p)^2)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+
+p værdi under 0.05 betyder at vi forkaster hypotesen om at den fælles ærdi for theta er 0.75
+og at det bedste bud for en model er den fremstillet under H_0 og ikke $H_0^\star$
+
+
+
+# opgave 2
+
+
+## 2.a
+vi skriver Likelihood funktionen op
+$$L(\alpha,\beta)=\prod_{i=1}^n\mathbb{I}(x_i\geq\beta)*\alpha*\beta^\alpha*x_i^{-(\alpha+1)}$$
+$$AFM: \hat{\beta}>min(x_1,...,x_n)\newline \Rightarrow L(\hat{\alpha},\hat{\beta})=0\,\text{ da en af indikator fuktionerne vil være 0}$$
+$$\newline set \,\, \hat\beta'\leq min(x_1,...,x_n) \newline \text{da }L(\hat{\alpha},\hat{\beta}')>0 $$
+da må vi have $\hat\beta\leq min(x_1,...,x_n)$
+$$AFM: \hat\beta<min(x_1,...,x_n)\newline set \,\, \hat\beta'\in(\hat\beta,min(x_1,...,x_n))$$
+$$\newline \text{da }L(\hat{\alpha},\hat{\beta}')=\hat{\alpha}^{n}*\hat{\beta}'^{n*a}*\prod_{i=1}^nx_i^{-(\alpha-1)}>\hat{\alpha}^{n}*\hat{\beta}^{n*a}*\prod_{i=1}^nx_i^{-(\alpha-1)}=L(\hat{\alpha},\hat{\beta})$$
+esttimatoren vil have for stort bias da den mindste altid vil være blødt større end $\beta$ da sandsynligheden for at en af de n er lig $\beta$ er lig nul da vi er i en kontinuert fordeling vil vi altid have positivt bias mens den stadig konvergerer assymptotisk 
+$$\hat\beta= min(x_1,...x_n)\geq\beta \text{ per konstruktion af fordelingen}$$
+da der er positiv sandsynlighed for større udfald er estimatoren biased
+den har positiv bias
+
+## 2.b
+$$L(\alpha,\beta)=\prod_{i=1}^n\mathbb{I}(x_i\geq\beta)*\alpha*\beta^\alpha*x_i^{-(\alpha+1)}$$
+da vi antager $\beta$ kendt er indikatrfunktionen lige meget og vi kan blot tage log og maksimere
+$$l(\alpha)=n*log(\alpha)+n*\alpha*log(\beta)-(\alpha+1)\sum_{i=1}^nlog(x_i)$$
+$$\newline \dfrac{\partial l}{\partial \alpha}=\dfrac{n}{\alpha}+n*log(\beta)-\sum_{i=1}^nlog(x_i)=0 $$
+$$\newline \Leftrightarrow\dfrac{n}{\alpha}=\sum_{i=1}^nlog(x_i)-log(\beta)=\sum_{i=1}^nlog(\dfrac{x_i}{\beta})$$
+$$\newline \Leftrightarrow \hat{\alpha}=\dfrac{n}{\sum_{i=1}^nlog(\dfrac{x_i}{\beta})}$$
+$$\newline \dfrac{\partial^2 l}{\partial \alpha^2}=-\dfrac{n}{\alpha^2}$$
+vi har per jensens ulighed at siden $\dfrac{1}{x}$ er en konvekts funktion at
+$$E[\hat\alpha]=E[\dfrac{n}{\sum_{i=1}^nlog(\dfrac{X_i}{\beta})}]>\dfrac{n}{E[\sum_{i=1}^nlog(\dfrac{X_i}{\beta})]}$$
+$$\newline =\dfrac{n}{\sum_{i=1}^nE[log(\dfrac{X_i}{\beta})]}=\dfrac{n}{n*\dfrac{1}{\alpha}}=\alpha$$
+1/n er konstant så vi lader den bare stå 
+da er estimatet for stort og har derved positivt bias 
+# opgave 3
+
+## 3.a
+jeg indlæser data
+```{r}
+dat1<-read.csv("Intel.csv")
+
+dat1$logtran<-log(dat1$Transistors)
+head(dat1)
+```
+herefter fitter jeg en lineær model
+
+```{r}
+m1<-lm(dat1$logtran~dat1$Year)
+summary(m1)
+```
+vi kalder confint for at få intervallerne
+```{r}
+confint(m1)
+```
+atlså har vi 95% konfidensintervallerne for hhv.
+skæring $\alpha$: [-687.5722628 -603.1043728]
+hældning $\beta$: [0.3103269    0.3525611]
+
+## 3.b
+i vores model har vi at vi forventer at log(T) stiger med $2*\beta$ på 2 år 
+$$log(T)=\alpha+\beta*t\Leftrightarrow exp(a+\beta*t)$$
+$$\mathbb{E}[log(T^{t+2})-log(T^t)]=2*\beta
+$$
+
+## 3.c
+vi har allerede konfidensintervallet 
+$$\beta\in[l,h]\Leftrightarrow 2\beta\in[2l,2h]\Leftrightarrow exp(2\beta)\in[exp(2l),exp(2h)]$$
+intervallet regner vi bare ud fra før
+```{r}
+c(l=exp(2*0.3103269),h=exp(2*0.3525611))
+```
+på 2 år er vores 95% konfidensinterval for faktoren der skal ganges på [1.860144 2.024094 ]
+da 2 er i dette strider data ikke imod moores lov da en fordobling er i vores konfidensinterval for en 2 årig stigning
+
+
+# opgave 4
+
+## 4.a
+1. simuleres der fra nulhypotesen? altså $\sigma_1^2=\sigma^2_2$
+2. er alle forudsætninger opfyldt? for F test og permutationstest 
+F test kræver at begge rækker er normafordelte observationsrækker som hver for sig har ens middleværdi
+altå hver række har fælles middelværdi og at de er uafhængige
+permutationstest kræver bare at hver observationsrække er uafhængige (og delvist også at hver observationsrække er ombyttelig hvilket aldrig bliver et problem i denne opgave da vi laver simulationer)
+
+vi ser mange steder at permutationstesten bonger ud steder hvor nulhypotesen er sand disse fejl kommer fra at permutationstesten faktisk testor om rækkefølgen af alle de observerede er ligegyldig så egentlig ikke nødvendig vis hvad vi ønsker
+
+
+i.
+1: ja begge simulationer er normalfordelte med samme middelværdi og varians
+2. ja begge observationsrækker er uafhængige og normalfordelte
+
+ii.
+1. ja begge er normaltfordelte med samme varians 
+2. ja begge er uafh og normalfordelte
+
+iii. 
+1. nej vi simulerer ikke fra nulhypotesen da vi har forskellige standardafvigelser 1.5 i den ene og 1.0 i den anden 
+2. ja begge rækker er normaltfordelte og uafhængige
+
+iiii.
+1. ja de 2 fordelinger har samme varians
+2. nej de 2 er lognormale derved ikke normale
+
+
+
+## 4.b
+```{r}
+dat2<-read.csv("sim - Copy.csv")
+head(dat2)
+grpa<-subset(dat2,subset=grp=="a")
+grpb<-subset(dat2,subset=grp=="b")
+```
+```{r}
+boxplot(dat2$x~dat2$grp)
+```
+```{r}
+qqnorm(grpa$x)
+hist(grpa$x)
+```
+```{r}
+qqnorm(grpb$x)
+hist(grpb$x)
+```
+vi ser at der ikke er nogen udfald under 0 hvilket tyder på at vi har at gøre med de lognormale data
+så jeg prøver at logge de 2 datasæt og ser hvordan qqplotsene ser ud efter
+```{r}
+grpa$logx<-log(grpa$x)
+grpb$logx<-log(grpb$x)
+par(mfrow=c(1,2))
+qqnorm(grpa$logx)
+qqline(grpa$logx)
+qqnorm(grpb$logx)
+qqline(grpb$logx)
+```
+hvor data nu ser rigtig fint ud 
+da tænker jeg at vi har et af de lognormale datasæt
+
+ud fra tabellen vil jeg helt klart anbefale at bruge permutationstestet jeg vil dog passe på med at sige det i gennerellitet og vil egentlig meget hellere have en transformation af data og køre f test 
+men siden jeg ikke har den mulighed så en permutationstest
+
+
+## 4.c
+vi laver den normale f-test ved var-test i r
+```{r}
+var.test(grpa$x,grpb$x)
+```
+
+
+nu permutationstest
+
+```{r}
+obj<-dat2$x
+
+
+obs<-var(grpa$x)/var(grpb$x)
+
+N<-10^4-1
+result<-numeric(N)
+for (i in 1:N){
+  index<-sample(length(obj),size=length(grpa$x),replace = FALSE)
+  result[i]<-var(obj[index])/var(obj[-index])
+}
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+```
+
+```{r}
+p_2sidet
+```
+
+nu vartest på transformeret data 
+```{r}
+var.test(grpa$logx,grpb$logx)
+```
+
+vi valgte at permutationstesten nok var bedst før fordi data ikke er normalfordelt af de 2 vil jeg da helst indrappotere permutationstestens p værdi på 0.64 og ikke forkaste hypotesen 
+
+helst ville jeg nok stadig helst indrappotere p værdien for f testen af de transformerede data 

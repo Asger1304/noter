@@ -1,0 +1,20 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-11-03"
+---
+
+```{r}
+install.packages("haven")   # if you haven’t installed it yet
+library(haven)
+```
+```{r}
+data<-read_dta("/Users/asgeraircool/Downloads/rhc1_cleaned.dta")
+```
+
+
+
+
+
+
+

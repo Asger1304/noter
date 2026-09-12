@@ -1,0 +1,142 @@
+---
+title: "tø uge 2"
+output: html_document
+date: "2025-01-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(resampledata3)
+```
+$$\text{
+Compute the mean x and median m of the eight numbers 1, 2, 4, 5, 6, 8, 11,
+15. Let} f (x) = \sqrt{x}.\newline
+\text{
+Apply this transformation to the data, and then com- pute the mean x̃ and the median m̃ of the transformed data
+}
+\newline
+\text {question a: }Is f (x) = x̃?\newline
+\text{question b: Is}  f ( m ) = m̃
+$$
+```{r}
+#we write up the data 
+x=c(1,2,4,5,6,8,11)
+#calculate the transformed data
+fx=sqrt(x)
+# find the mean for the data
+xb=mean(x)
+#then the mean of the transformation 
+mean(fx)
+#then f of the mean 
+sqrt(xb)
+#now we do the exactly the same but for the median 
+m=median(x)
+median(fx)
+sqrt(m)
+```
+$$
+\text{the mean is not equal since f is concave then } f(1/n*\sum_{i=1}^nx_i)\leq 1/n \sum_{i=1}^nf(x_i)
+\newline 
+\text{the median in this case is equal
+
+}
+$$
+
+$$\text{
+Let x and m denote the mean and median, respectively, of }x_1 < x_2 < · · · < x_n. \text{Let f be a real-valued function.
+}\newline \text{
+a) Is f(x) the mean off} \text{ f(x_1),f(x_2),...,f(x_n)?
+no simply look at the last exercise }
+\newline
+\text{
+b) Is f(m) the median off f(x1),f(x2),...,f(xn)?
+try x=(x_1,x_2)=(1,2)
+f=x^2
+not equal}
+\newline
+\text{
+
+c) Are there any conditions that would ensure that f (x) is the mean of
+the transformed data?
+liniarity of f or no variance in x
+}
+\newline
+\text{
+d) Are there any conditions that would ensure that f (m) is the median
+of the transformed data?
+
+liniarity of f or no variance in x}$$
+
+$$\text{
+
+}$$
+```{r}
+
+
+s=table(FlightDelays$DepartTime)
+barplot(s)
+
+
+
+
+```
+
+```{r}
+tab <- table(FlightDelays$Day,FlightDelays$Delayed30)
+prop.table(tab,1)
+```
+
+
+```{r}
+boxplot(FlightDelays$FlightLength~FlightDelays$Delayed30)
+
+```
+$$\text{
+opgave 2.4,d
+vi ser at hvis flyet er forsiket er der en støøre chance for at det er en medium længde flyvetur men også mange flere outliers, jeg ville kke drage nogle konklutioner
+}$$
+
+
+
+```{r}
+par(mfrow=c(1,2))
+tab <- table(Recidivism$Recid)
+barplot(tab)
+prop.table(tab)
+tab2 <-table(Recidivism$Age25,Recidivism$Recid)
+prop.table(tab2,1)
+```
+
+$$\text{
+wee seee that about 30,6% of offenders over 25 go back to prison while about 36.5% of under 25 offenders go back 
+
+}$$
+
+```{r}
+t=Recidivism$Days
+s=Recidivism$Type
+boxplot(t~s)
+
+```
+
+$$\text{
+the median reeviction time is lover for tech crimes . all quantiles are lover for the tech crime type
+
+}$$
+
+```{r}
+quantile(Recidivism$Days,na.rm=TRUE)
+```
+
+```{r}
+
+par(mfrow=c(1,2))
+over25 <-subset(Recidivism, Age25== "Over 25")
+under25 <- subset(Recidivism,Age25== "Under 25")
+print(over25)
+print(under25)
+plot.ecdf(over25$Days)
+plot.ecdf(under25$Days)
+```
+
+

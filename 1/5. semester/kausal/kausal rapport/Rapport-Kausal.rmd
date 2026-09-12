@@ -1,0 +1,219 @@
+---
+title: "Rapport - Kausal"
+output: html_document
+date: "2025-12-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Genskabelse af tabel 4 column 3
+```{r}      
+library("readstata13")
+data = read.dta13("prussia.simple.dta")
+head(data)
+library(AER) #IV-model, coeftest
+library(lmtest) #coeftest
+library(sandwich) #coeftest
+library(fixest) #IV-model med Kleibergen-Paap F-statistic
+```
+
+##OLS uden kontrolvariable:
+$$
+\text{share_antisem_reich_1898}=\beta_0+\beta_1\cdot \text{f_prot_1882}+\varepsilon
+$$
+
+Vi kigger udelukkende på hvordan andelen af antisemitisme i 1898 afhænger af andelen af protestanter i 1882
+
+
+```{r}
+ols_no_control <- lm(share_antisem_reich_1898 ~ f_prot_1882, data = data)
+summary(ols_no_control)
+
+#coeftest(ols_no_control, vcov = vcovHC(ols_no_control, type = "HC3"))
+coeftest(ols_no_control, vcov = vcovCL(ols_no_control, cluster = data$code_reichstag_wk))
+
+cat("mean.dep.var:",mean(data$share_antisem_reich_1898))
+```
+
+Vi ser estimatet $\beta_1$=0.07198=0.0720 som i tabellen fra BP.
+
+Vi ser standard error 0.01722=0.017 som i tabllen fra BP, aflæst fra coeftest med clustering.
+
+Vi ser mean.dep.var er 0.0412=0.041 som i tabellen fra BP, blot gennemsnittet af den afhængige variabel (share_antisem_reich_1898)
+
+Vi ser $R^2$=0.05385=0.054 som i tabellen fra BP, aflæst fra Multiple R-squared i summary.
+
+Altså alle genskabt korrekt.
+
+
+
+
+
+
+##OLS med kontrolvariable:
+$$
+\text{share_antisem_reich_1898}=\beta_0+\beta_1\cdot \text{f_prot_1882}+\beta_2\cdot \text{f_young}+\beta_3\cdot \text{f_fem}+\beta_4\cdot \text{f_ortsgeb}+\beta_5\cdot \text{f_pruss}+\beta_6\cdot \text{hhsize}+\beta_7\cdot \text{lnpop}+\beta_8\cdot \text{posen}+\beta_9\cdot \text{f_urban}+\varepsilon
+$$
+
+Vi kigger udelukkende på hvordan andelen af antisemitisme i 1898 afhænger af andelen af protestanter i 1882
+
+
+```{r}
+ols_controls <- lm(share_antisem_reich_1898 ~ f_prot_1882 + f_young + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + posen + f_urban, data = data)
+summary(ols_controls)
+
+#coeftest(ols_no_control, vcov = vcovHC(ols_no_control, type = "HC3"))
+coeftest(ols_controls, vcov = vcovCL(ols_controls, cluster = data$code_reichstag_wk))
+
+cat("mean.dep.var:",mean(data$share_antisem_reich_1898))
+```
+
+Vi ser estimatet $\beta_1$=0.1090=0.109 som i tabellen fra BP.
+
+Vi ser standard error 0.02487=0.025 som i tabllen fra BP, aflæst fra coeftest med clustering.
+
+mean.dep.var er som før
+
+Vi ser $R^2$=0.1964=0.196 som i tabellen fra BP, aflæst fra Multiple R-squared i summary.
+
+Altså alle genskabt korrekt.
+
+
+##IV med kontrolvariable:
+Instrument er kmwittenberg.
+
+```{r}
+iv_model <- ivreg(share_antisem_reich_1898 ~ 
+                    f_prot_1882 + f_young + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + posen + f_urban | 
+                    f_young + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + posen + f_urban + kmwittenberg, 
+                  data = data)
+
+summary(iv_model, diagnostics = TRUE)
+
+coeftest(iv_model, vcov = vcovCL(iv_model, cluster = data$code_reichstag_wk))
+
+
+```
+
+Vi ser estimatet $\beta_1$=0.1312=0.131 som i tabellen fra BP.
+
+Vi ser standard error 0.03776=0.038 som i tabllen fra BP, aflæst fra coeftest med clustering.
+
+mean.dep.var er som før
+
+Cragg-Donald Wald F-statistic/Weak instruments har F-statistic på 111.315 som i tabellen fra BP, aflæst i summary med diagnostics=TRUE
+
+Kleibergen-Paap rk Wald F-statistic/ ser vi ikke her, måske brug pakken fixest og kommandoen feols.
+
+Altså alle genskabt korrekt.
+
+
+```{r}
+iv_kleibergen_paap <- feols(
+  share_antisem_reich_1898 ~ 
+    f_young + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + posen + f_urban |
+    f_prot_1882 ~ kmwittenberg,
+  data = data,
+  cluster = ~code_reichstag_wk
+)
+
+summary(iv_kleibergen_paap)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Genskabelse af tabel 6 columns 3 + 4:
+```{r}
+dat <- readRDS("pdata.city.R")
+dat
+
+library(plm) #Panel data
+library(AER) #IV
+library(lmtest)   #coeftest
+library(sandwich) #vcovHC
+```
+
+
+```{r}
+dat$after <- ifelse(
+  dat$century_15001600 == 1 |
+    dat$century_16001700 == 1 |
+    dat$century_17001800 == 1,
+  1, 0
+)
+
+pdata <- pdata.frame(dat, index = c("id", "after"))
+```
+
+
+##OLS diff-in-diff-in-diff
+```{r}
+ols_triple_diff <- plm(pogrom_small_t ~ post_protestant_1546 + PostXJLend_any_geq2 + PostXJLend_anyXProt, data = pdata,
+            model = "within", effect = "twoways"   # city FE + century FE
+)
+
+summary(ols_triple_diff)
+
+#cat("Estimate of post_protestant_1546:", summary(ols_triple_diff)$coefficients["post_protestant_1546",1], "\n")
+#cat("PostXJLend_anyXProt:", summary(ols_triple_diff)$coefficients["PostXJLend_anyXProt",1])
+
+
+coeftest(ols_triple_diff, vcov = vcovHC(ols_triple_diff, type = "HC1", cluster = "group"))
+
+cat("mean.dep.var:",mean(dat$pogrom_small_t, na.rm = TRUE), "\n")
+#cat("Observations:", , "\n")
+cat("Cities:",length(unique(pdata$id)), "\n")
+
+```
+
+
+##IV diff-in-diff-in-diff
+```{r}
+library(AER)
+library(sandwich)
+library(lmtest)
+
+iv <- ivreg(
+  pogrom_small_t ~
+    post_protestant_1546 + 
+               PostXJLend_anyXProt + 
+               century_14001500 + 
+               century_15001600 + 
+               century_16001700 + 
+               century_17001800 + 
+               PostXJLend_any_geq2 +
+               factor(id)
+  |
+    post_protestant_1546 +
+    post_n_trade1serv_1500 +
+    pr_post_n_trade1serv_1500 +
+    century_14001500 +
+    century_15001600 +
+    century_16001700 +
+    century_17001800 +
+    factor(id),
+  data=pdata
+)
+
+coeftest(iv, vcov = vcovCL(iv, cluster = ~ id, type = "HC0"))
+
+```
+
+
+

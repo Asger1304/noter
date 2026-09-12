@@ -1,0 +1,194 @@
+---
+title: "reeksamen 2019"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-05-30"
+---
+```{r}
+set.seed(42)
+```
+
+# opgave 1
+jeg smider de aktuelle ind i en liste
+```{r}
+A<-c(6,9,7,9,6,7,5)
+```
+
+## 1.a
+vi regner den bare
+```{r}
+(pexp(4,rate=1/12.2)-pexp(2,rate=1/12.2))*sum(A)
+
+```
+som vi runder af til 6.3
+
+## 1.b
+vi har en G test 
+alle de forventede er større end 5 så G testoren er assymptotisk chi^2 fordelt
+startmodellen har 6 frie parametre mens vi under H_0 kun har 1 da kommer G testoren til at have 5 frihedsgrader
+(jeg antager implicit at 12.2 er den værdi der maksimerer sandsynligheden for udfaldet i dette tilfælde, hvis det skulle læses som en test om den er eksponentielfordelt med præcis den parameter skal den have 0 frihedsgrader)
+```{r}
+# jeg skriver de forventede ind og kører testen
+k=1
+e<-c(7.4,6.3,5.3,8.4,7.3,8,6.3)
+gtest<-2*sum(A*log(A/e))
+pval<-1-pchisq(gtest,length(A)-1-k)
+c(Gteststørrelse=gtest,Pværdi=pval)
+```
+p værdi langt over 0.7 betyder der ikke er noget grund til at forkaste hypotesen og at det derved er rimeligt at antage at ventetiden er eksponentialfordelt 
+
+
+# opgave 2 
+## 2.a
+$$M_0:X_i\sim N(\mu_0,\sigma^2 )\quad i=1,...100$$
+$$H_0:\sigma^2=400\quad H_A:\sigma^2>400$$
+under m_0 med fast middelværdi betyder det at 
+$$S^2(X)\sim \sigma^2_0\dfrac{\chi^2(n)}{n-1}$$
+## 2.b
+chancen for at firmaet forkaster hypotesen altså deres skøn er større end deres cutoff under hypotesen er
+$$P(S^2(X)\geq 500)=P(H\geq\dfrac{500*(n-1)}{400})$$
+hvor $H\sim\chi^2(n)$
+det kan vi blot regne
+```{r}
+1-pchisq(500*99/400,df=100)
+```
+
+
+# opgave 3 
+## 3.a
+```{r}
+dat1<-read.csv("beans.csv",stringsAsFactors = T)
+head(dat1)
+```
+vi laver en permutationstest som vi bliver bedt om
+```{r}
+ 
+obj<-dat1$growth
+gruppe1<-subset(dat1,subset = color=="red")$growth
+gruppe2<-subset(dat1,subset = color=="green")$growth
+
+obs<-median(gruppe1)-median(gruppe2)
+
+N<-10^5
+result<-numeric(N)
+for (i in 1:N){
+  index<-sample(length(obj),size=length(gruppe1),replace = FALSE)
+  result[i]<-median(obj[index])-median(obj[-index])
+}
+p_lille<-(sum(result<=obs)+1)/(N+1)
+p_stor<-(sum(result>=obs)+1)/(N+1)
+
+p_2sidet<-2*min(p_lille,p_stor)
+p_2sidet
+```
+p værdi på 0.078>0.05 betyder at vi ikke forkaster hypotesen på baggrund af data men da vi er nede omkring 0.05 vil jeg dog stadig være en smule skeptisk omkring at de vokser på helt samme vis
+
+
+# opgave 4
+```{r}
+dat2<-read.csv("FloridaRoads.csv",stringsAsFactors = T)
+head(dat2)
+```
+jeg inddeler data i 2 grupper 
+```{r}
+comp<-subset(dat2,subset=bid=="competitive")
+fixed<-subset(dat2,subset=bid=="fixed")
+```
+
+
+## 4.a
+
+jeg fitter først den ikke loggede lineære model 
+```{r}
+m1t<-lm(cost~DOTestimate*bid,data=dat2)
+
+```
+jeg plotter først de 2 sammenhænge
+```{r}
+qqnorm(m1t$residuals)
+qqline(m1t$residuals)
+```
+residualerne ser ikke normaltfordelte ud vi burde have en snoen om en linje men i stedet har vi det her omvendte s 
+vi tjekker også residualerne som funktion af esimatet
+```{r}
+plot(m1t$residuals~dat2$DOTestimate)
+```
+hvor det ser ud som at vi får mere og mere varians desto højere x_ig
+
+nu til den loggede version
+```{r}
+m1<-lm(logcost~logDOTestimate*bid,data=dat2)
+
+```
+jeg plotter først de 2 sammenhænge
+```{r}
+qqnorm(m1$residuals)
+qqline(m1$residuals)
+```
+snoer sig pænt om linjen med en smule afvigelse for de mindste værdier men stadig markant bedre end den ikke loggede version 
+
+```{r}
+plot(m1$residuals~dat2$logDOTestimate)
+```
+her ser variansen fin ud og det ser ikke ud til at variansen ændre sig for større værdier af forklarende variable
+
+
+
+
+## 4.b
+$$M_2:log(Y_{ig})\sim N(\alpha_g+\beta*log(x_{ig}),\sigma^2)$$
+```{r}
+m2<-lm(logcost~logDOTestimate+bid,data=dat2)
+anova(m2,m1)
+```
+p værdien er omkring 0.4 markant større end 0.05 da er det rimeligt at reducere modellen 
+
+## 4.c
+der er 2 muligheder for modelreduktion fælles intercept eller ikke linaritet 
+ved summary kan vi se at de nok ikke kommer til at gå men jeg kører f-testet alligvel
+```{r}
+summary(m2)
+```
+først for fælles intercept
+```{r}
+m3<-lm(logcost~logDOTestimate,data=dat2)
+anova(m3,m2)
+```
+meget lav værdi betyder at det ikke er rimeligt at reducere modellen til en med fælles skæring
+```{r}
+m3a<-lm(logcost~bid,data=dat2)
+anova(m3a,m2)
+```
+igen er p værdien meget lav derved forkastes hypotesen om konstant middelværdi gruppevis
+
+
+
+## 4.d
+vi trækker det dirkete ud af r 
+```{r}
+confint(m2)
+```
+95% konfidensintervallet for $\beta$ er da [0.9907840  , 1.02003057]
+da 1 er i intervallet er det rimeligt at antage at hældningen i den "loggede" model er 1
+
+## 4.e
+```{r}
+nydata<-data.frame(DOTestimate=3000,bid="competitive")
+nydata$logDOTestimate<-log(nydata$DOTestimate)
+```
+
+```{r}
+predict(m2,nydata,interval = "prediction",level=0.9)
+```
+da har vi prediktionsinterval for de loggede lig [7.645874  ,8.160006]
+for at få det tilbage til ikke logget tager vi bare exp på endepunkterne
+```{r}
+c(low=exp(7.645874),high=exp(8.160006))
+```
+
+
+
+
+
+

@@ -1,0 +1,140 @@
+---
+title: "kausal tø 3"
+output: html_document
+date: "2025-09-13"
+---
+
+```{r}
+library("wooldridge")
+```
+
+1.
+i)
+
+a condition of the gauss markov assumptions is 
+depending on if we see the non error terms of the model as fixed or stochastic
+$$
+\mathbb{V}[\hat{\beta_1} ]=\sigma^2*E(X'X)^{-1}= \dfrac{\sigma^2}{\sum_{i=1}^nx_i^2}
+$$
+
+
+
+
+
+
+2.
+
+
+```{r}
+discrim
+```
+
+
+```{r}
+lmlogsoda<-lm(log(psoda)~prpblck+log(income)+prppov,data = discrim)
+summary(lmlogsoda)
+```
+
+the regression implies that an increase in log income would lead to an increase in logprice, this is holding all else equal meaning that the rprpov will also be equa, so this might be unrealistic
+
+prp black is 
+
+```{r}
+X <- model.matrix(lmlogsoda)
+
+XtX <-t(X) %*% X
+sigmah<-solve(XtX)*summary(lmlogsoda)$sigma^2
+sigmah
+
+```
+
+assuming nothing about the distributions  and just the assymptotic u-test
+
+
+```{r}
+ba <-lmlogsoda$coefficients["prpblck"]
+
+a <- c(0,1,0,0)
+sd <- sqrt( t(a) %*% sigmah %*% a)
+u =ba/sd
+1-(pnorm(u)-pnorm(-u))
+
+
+```
+ we get a p-value of 1.76% which is good enogh if we accept on a 5% level put not good enough if we accept on a 1% level 
+ anyway we are using the assymptotic test but with 400 samples this should be fine 
+
+
+```{r}
+a1 <-c(0,0,1,0)
+a2 <-c(0,0,0,1)
+
+corr <- t(a1) %*%sigmah %*% a2 /sqrt( t(a1)%*%sigmah%*%a1*t(a2)%*%sigmah%*%a2)
+corr
+```
+
+in this regression the correlation is possitive 
+```{r}
+u2 <- lmlogsoda$coefficients["log(income)"]/sqrt(t(a1)%*%sigmah%*%a1)
+u2
+1-(pnorm(u2)-pnorm(-u2))
+
+u3 <- lmlogsoda$coefficients["prppov"]/sqrt(t(a2)%*%sigmah%*%a2)
+u3
+1-pnorm(u3)+pnorm(-u3)
+```
+both significant on a 1% level 
+
+
+```{r}
+m2<-lm(log(psoda)~prpblck+log(income)+prppov+log(hseval),data = discrim)
+summary(m2)
+```
+the houseevaluation seems to be a strong predictor and seems to make the logincome and prppov insignificant
+
+
+
+
+```{r}
+X <- model.matrix(m2)
+
+XtX <-t(X) %*% X
+sigmah<-solve(XtX)*summary(m2)$sigma^2
+sigmah
+
+```
+we can calculate the pvalue 
+
+```{r}
+a = c(0,0,0,0,1)
+u = m2$coefficients["log(hseval)"]/(t(a) %*% sigmah %*% a)
+1-pnorm(abs(u))+(pnorm(-abs(u)))
+```
+
+the p value of the test testing the hypotheses that the log(hseval) is insignifuicant for the regression i very low so we "forkast" it 
+
+
+the siginficance of the 2 others becoes low 
+
+i would prefer the model which uses median housing prices 
+```{r}
+m3<-lm(log(psoda)~prpblck+log(hseval),data = discrim)
+summary(m3)
+```
+
+
+
+
+
+3.
+
+
+
+
+
+
+
+
+
+
+
